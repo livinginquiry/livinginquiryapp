@@ -28,6 +28,8 @@ dependencies:
   intl: ^0.16.0
   sqflite:
   path:
+  get_it: ^3.0.3
+  provider: ^3.2.0
 
 dev_dependencies:
   flutter_test:

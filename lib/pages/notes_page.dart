@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
-import '../models/sqlite_handler.dart';
 import '../widgets/note_tile.dart';
 
 class NotesPage extends StatefulWidget {
@@ -14,9 +12,6 @@ class NotesPage extends StatefulWidget {
 }
 
 class _NotesPageState extends State<NotesPage> {
-  final noteDB = NotesDBHandler();
-  List<Map<String, dynamic>> _allNotesInQueryResult = [];
-
   @override
   void initState() {
     super.initState();
@@ -29,27 +24,46 @@ class _NotesPageState extends State<NotesPage> {
 
   @override
   Widget build(BuildContext context) {
+    var notesBloc = Provider.of<NotesBloc>(context);
     GlobalKey _listKey = GlobalKey();
 
-    if (notesBloc.updateNeeded) {
-      retrieveAllNotesFromDatabase();
-    }
     return Container(
         child: Padding(
       padding: _paddingForView(context),
-      child: ListView.separated(
-        key: _listKey,
-        itemCount: _allNotesInQueryResult.length,
-        itemBuilder: (BuildContext context, int index) {
-          return _tileGenerator(index);
-        },
-        padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
-        separatorBuilder: (BuildContext context, int index) {
-          return SizedBox(
-            height: 10,
-          );
-        },
-      ),
+      child: StreamBuilder<List<Note>>(
+          stream: notesBloc.notes,
+          builder: (BuildContext context, AsyncSnapshot<List<Note>> snapshot) {
+            // Make sure data exists and is actually loaded
+            if (snapshot.hasData) {
+              // If there are no notes (data), display this message.
+              if (snapshot.data.length == 0) {
+                return Text('No notes');
+              }
+
+              List<Note> notes = snapshot.data;
+
+              return ListView.separated(
+                key: _listKey,
+                itemCount: notes.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return NoteTile(notes[index]);
+                },
+                padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
+                separatorBuilder: (BuildContext context, int index) {
+                  return SizedBox(
+                    height: 10,
+                  );
+                },
+              );
+            }
+
+            // If the data is loading in, display a progress indicator
+            // to indicate that. You don't have to use a progress
+            // indicator, but the StreamBuilder has to return a widget.
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }),
     ));
   }
 
@@ -63,26 +77,5 @@ class _NotesPageState extends State<NotesPage> {
       padding = 8;
     }
     return EdgeInsets.only(left: padding, right: padding, top: topBottom, bottom: topBottom);
-  }
-
-  NoteTile _tileGenerator(int i) {
-    return NoteTile(Note(
-        _allNotesInQueryResult[i]["id"],
-        _allNotesInQueryResult[i]["title"] == null ? "" : utf8.decode(_allNotesInQueryResult[i]["title"]),
-        _allNotesInQueryResult[i]["content"] == null ? "" : utf8.decode(_allNotesInQueryResult[i]["content"]),
-        DateTime.fromMillisecondsSinceEpoch(_allNotesInQueryResult[i]["date_created"] * 1000),
-        DateTime.fromMillisecondsSinceEpoch(_allNotesInQueryResult[i]["date_last_edited"] * 1000),
-        Color(_allNotesInQueryResult[i]["note_color"])));
-  }
-
-  void retrieveAllNotesFromDatabase() {
-    // queries for all the notes from the database ordered by latest edited note. excludes archived notes.
-    var _testData = noteDB.selectAllNotes();
-    _testData.then((value) {
-      setState(() {
-        this._allNotesInQueryResult = value;
-        notesBloc.updateNeeded = false;
-      });
-    });
   }
 }

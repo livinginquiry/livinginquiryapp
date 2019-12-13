@@ -4,9 +4,9 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
 
-import 'note.dart';
+import '../models/note.dart';
 
-class NotesDBHandler {
+class DbProvider {
   final databaseName = "notes.db";
   final tableName = "notes";
 
@@ -20,7 +20,7 @@ class NotesDBHandler {
     "is_archived": "INTEGER"
   };
 
-  static Database _database;
+  Database _database;
 
   Future<Database> get database async {
     if (_database != null) return _database;
@@ -64,25 +64,16 @@ class NotesDBHandler {
     return path;
   }
 
-  Future<int> insertNote(Note note, bool isNew) async {
+  Future<int> addNote(Note note) async {
     // Get a reference to the database
     final Database db = await database;
 
     // Insert the Notes into the correct table.
-    await db.insert(
+    return await db.insert(
       'notes',
-      isNew ? note.toMap(false) : note.toMap(true),
+      note.id == -1 ? note.toMap(false) : note.toMap(true),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-
-    if (isNew) {
-      // get latest note which isn't archived, limit by 1
-      var one =
-          await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0], limit: 1);
-      int latestId = one.first["id"] as int;
-      return latestId;
-    }
-    return note.id;
   }
 
   Future<bool> copyNote(Note note) async {
@@ -106,16 +97,14 @@ class NotesDBHandler {
     }
   }
 
-  Future<void> deleteNote(Note note) async {
-    if (note.id != -1) {
-      final Database db = await database;
-      try {
-        await db.delete("notes", where: "id = ?", whereArgs: [note.id]);
-        return true;
-      } catch (Error) {
-        print("Error deleting ${note.id}: ${Error.toString()}");
-        return false;
-      }
+  Future<void> deleteNote(int id) async {
+    final Database db = await database;
+    try {
+      await db.delete("notes", where: "id = ?", whereArgs: [id]);
+      return true;
+    } catch (Error) {
+      print("Error deleting ${id}: ${Error.toString()}");
+      return false;
     }
   }
 
@@ -125,5 +114,15 @@ class NotesDBHandler {
     var data = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
 
     return data;
+  }
+
+  Future<List<Note>> getNotes() async {
+    final Database db = await database;
+    // query all the notes sorted by last edited
+    var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
+
+    List<Note> notes = res.isNotEmpty ? res.map((note) => Note.fromJson(note)).toList() : [];
+
+    return notes;
   }
 }

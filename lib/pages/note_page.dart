@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 
 import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
-import '../models/sqlite_handler.dart';
 import '../models/util.dart';
 import '../widgets/options_sheet.dart';
 
@@ -32,9 +32,6 @@ class _NotePageState extends State<NotePage> {
 
   Note _editableNote;
 
-  // the timer variable responsible to call persistData function every 5 seconds and cancel the timer when the page pops.
-  Timer _persistenceTimer;
-
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   @override
@@ -52,12 +49,6 @@ class _NotePageState extends State<NotePage> {
     if (widget.noteInEditing.id == -1) {
       _isNewNote = true;
     }
-    _persistenceTimer = new Timer.periodic(Duration(seconds: 5), (timer) {
-      // call insert query here
-      print("5 seconds passed");
-      print("editable note id: ${_editableNote.id}");
-      _persistData();
-    });
   }
 
   @override
@@ -82,7 +73,7 @@ class _NotePageState extends State<NotePage> {
         body: _body(context),
         resizeToAvoidBottomPadding: false,
       ),
-      onWillPop: _readyToPop,
+      onWillPop: () => _readyToPop(context),
     );
   }
 
@@ -198,27 +189,27 @@ class _NotePageState extends State<NotePage> {
         builder: (BuildContext ctx) {
           return OptionsSheet(
             color: _noteColor,
-            callBackColorTapped: _changeColor,
+            callBackColorTapped: (color) => _changeColor(color, context),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
             lastModified: _editableNote.dateLastEdited,
           );
         });
   }
 
-  void _persistData() {
+  void _persistData(BuildContext context) {
+    var notesBloc = Provider.of<NotesBloc>(context);
+
     updateNoteObject();
 
     if (_editableNote.content.isNotEmpty) {
-      var noteDB = NotesDBHandler();
-
       if (_editableNote.id == -1) {
-        Future<int> autoIncrementedId = noteDB.insertNote(_editableNote, true); // for new note
-        // set the id of the note from the database after inserting the new note so for next persisting
-        autoIncrementedId.then((value) {
+        notesBloc.inAddNote.add(_editableNote); // for new note
+
+        notesBloc.added.listen((value) {
           _editableNote.id = value;
         });
       } else {
-        noteDB.insertNote(_editableNote, false); // for updating the existing note
+        notesBloc.inAddNote.add(_editableNote);
       }
     }
   }
@@ -240,7 +231,6 @@ class _NotePageState extends State<NotePage> {
       // Change last edit time only if the content of the note is mutated in compare to the note which the page was called with.
       _editableNote.dateLastEdited = DateTime.now();
       print("Updating date_last_edited");
-      notesBloc.updateNeeded = true;
     }
   }
 
@@ -272,6 +262,7 @@ class _NotePageState extends State<NotePage> {
   }
 
   void _deleteNote(BuildContext context) {
+    var notesBloc = Provider.of<NotesBloc>(context);
     if (_editableNote.id != -1) {
       showDialog(
           context: context,
@@ -282,13 +273,20 @@ class _NotePageState extends State<NotePage> {
               actions: <Widget>[
                 FlatButton(
                     onPressed: () {
-                      _persistenceTimer.cancel();
-                      var noteDB = NotesDBHandler();
                       Navigator.of(context).pop();
-                      noteDB.deleteNote(_editableNote);
-                      notesBloc.updateNeeded = true;
+                      notesBloc.inDeleteNote.add(_editableNote.id);
 
-                      Navigator.of(context).pop();
+                      // Wait for `deleted` to be set before popping back to the main page. This guarantees there's no
+                      // mismatch between what's stored in the database and what's being displayed on the page.
+                      // This is usually only an issue with more database heavy actions, but it's a good thing to
+                      // add regardless.
+                      notesBloc.deleted.listen((deleted) {
+                        if (deleted) {
+                          // Pop and return true to let the main page know that a note was deleted and that
+                          // it has to update the note stream.
+                          Navigator.of(context).pop();
+                        }
+                      });
                     },
                     child: Text("Yes")),
                 FlatButton(onPressed: () => {Navigator.of(context).pop()}, child: Text("No"))
@@ -298,36 +296,33 @@ class _NotePageState extends State<NotePage> {
     }
   }
 
-  void _changeColor(Color newColorSelected) {
+  void _changeColor(Color newColorSelected, BuildContext context) {
     print("note color changed");
     setState(() {
       _noteColor = newColorSelected;
       _editableNote.noteColor = newColorSelected;
     });
-    _persistColorChange();
-    notesBloc.updateNeeded = true;
+    _persistColorChange(context);
   }
 
-  void _persistColorChange() {
+  void _persistColorChange(BuildContext context) {
     if (_editableNote.id != -1) {
-      var noteDB = NotesDBHandler();
+      var notesBloc = Provider.of<NotesBloc>(context);
       _editableNote.noteColor = _noteColor;
-      noteDB.insertNote(_editableNote, false);
+      notesBloc.inAddNote.add(_editableNote);
     }
   }
 
   void _saveAndStartNewNote(BuildContext context) {
-    _persistenceTimer.cancel();
-    var emptyNote = new Note(-1, "", "", DateTime.now(), DateTime.now(), Colors.white);
+    var emptyNote = Note("", "", DateTime.now(), DateTime.now(), Colors.white);
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
 
-  Future<bool> _readyToPop() async {
-    _persistenceTimer.cancel();
+  Future<bool> _readyToPop(BuildContext context) async {
     //show saved toast after calling _persistData function.
 
-    _persistData();
+    _persistData(context);
     return true;
   }
 
@@ -351,20 +346,15 @@ class _NotePageState extends State<NotePage> {
   }
 
   void _exitWithoutSaving(BuildContext context) {
-    _persistenceTimer.cancel();
-    notesBloc.updateNeeded = false;
     Navigator.of(context).pop();
   }
 
   void _archiveThisNote(BuildContext context) {
     Navigator.of(context).pop();
+    var notesBloc = Provider.of<NotesBloc>(context);
     // set archived flag to true and send the entire note object in the database to be updated
     _editableNote.isArchived = true;
-    var noteDB = NotesDBHandler();
-    noteDB.archiveNote(_editableNote);
-    // update will be required to remove the archived note from the staggered view
-    notesBloc.updateNeeded = true;
-    _persistenceTimer.cancel(); // shutdown the timer
+    notesBloc.inSaveNote.add(_editableNote);
 
     Navigator.of(context).pop(); // pop back to staggered view
     // TODO: OPTIONAL show the toast of deletion completion
@@ -372,14 +362,15 @@ class _NotePageState extends State<NotePage> {
   }
 
   void _copy() {
-    var noteDB = NotesDBHandler();
+    var notesBloc = Provider.of<NotesBloc>(context);
     Note copy =
-        Note(-1, _editableNote.title, _editableNote.content, DateTime.now(), DateTime.now(), _editableNote.noteColor);
+        Note(_editableNote.title, _editableNote.content, DateTime.now(), DateTime.now(), _editableNote.noteColor);
+    notesBloc.inAddNote.add(copy);
 
-    var status = noteDB.copyNote(copy);
-    status.then((querySuccess) {
-      if (querySuccess) {
-        notesBloc.updateNeeded = true;
+    notesBloc.added.listen((id) {
+      if (id >= 0) {
+        // Pop and return true to let the main page know that a note was deleted and that
+        // it has to update the note stream.
         Navigator.of(_globalKey.currentContext).pop();
       }
     });

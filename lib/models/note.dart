@@ -13,8 +13,8 @@ class Note {
   Color noteColor;
   bool isArchived;
 
-  Note(this.id, this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
-      {this.isArchived = false});
+  Note(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
+      {this.id = -1, this.isArchived = false});
 
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
@@ -30,6 +30,14 @@ class Note {
     }
     return data;
   }
+
+  factory Note.fromJson(Map<String, dynamic> json) => Note(
+      json["title"] == null ? "" : utf8.decode(json["title"]),
+      json["content"] == null ? "" : utf8.decode(json["content"]),
+      DateTime.fromMillisecondsSinceEpoch(json["date_created"] * 1000),
+      DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
+      Color(json["note_color"]),
+      id: json["id"]);
 
   void archiveThisNote() {
     isArchived = true;

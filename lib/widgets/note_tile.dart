@@ -1,7 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
-import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
 import '../models/util.dart';
 import '../pages/note_page.dart';
@@ -40,7 +39,6 @@ class _NoteTileState extends State<NoteTile> {
   }
 
   void _noteTapped(BuildContext ctx) {
-    notesBloc.updateNeeded = false;
     Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(widget.note)));
   }
 
