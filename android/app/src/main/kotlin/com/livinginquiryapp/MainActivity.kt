@@ -1,4 +1,4 @@
-package com.example.livinginquiryapp
+package com.livinginquiryapp
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity

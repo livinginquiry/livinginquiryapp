@@ -25,11 +25,15 @@ dependencies:
   cupertino_icons: ^0.1.2
   auto_size_text: ^2.1.0
   share: ^0.6.3+4
-  intl: ^0.16.0
+  intl: ^0.15.8
   sqflite:
   path:
   get_it: ^3.0.3
   provider: ^3.2.0
+  yaml: ^2.2.0
+  flutter_speed_dial: ^1.2.5
+  font_awesome_flutter: ^8.4.0
+  flutter_form_builder: ^3.7.2
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +44,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  assets:
+    - assets/question_types.yaml
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

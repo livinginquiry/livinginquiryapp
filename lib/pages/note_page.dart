@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 
@@ -11,51 +12,41 @@ import '../models/util.dart';
 import '../widgets/options_sheet.dart';
 
 class NotePage extends StatefulWidget {
-  final Note noteInEditing;
+  final Worksheet worksheet;
 
-  NotePage(this.noteInEditing);
+  NotePage(this.worksheet);
   @override
   _NotePageState createState() => _NotePageState();
 }
 
 class _NotePageState extends State<NotePage> {
-  final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
+  Worksheet _worksheet;
   var _noteColor;
   bool _isNewNote = false;
-  final _titleFocus = FocusNode();
-  final _contentFocus = FocusNode();
 
-  String _titleFrominitial;
-  String _contentFromInitial;
-  DateTime _lastEditedForUndo;
-
-  Note _editableNote;
+  // DateTime _lastEditedForUndo;
 
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
+
+  final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
 
   @override
   void initState() {
     super.initState();
-    _editableNote = widget.noteInEditing;
-    _titleController.text = _editableNote.title;
-    _contentController.text = _editableNote.content;
-    _noteColor = _editableNote.noteColor;
-    _lastEditedForUndo = widget.noteInEditing.dateLastEdited;
+    _worksheet = widget.worksheet;
+    _noteColor = _worksheet.noteColor;
+    // _lastEditedForUndo = widget.worksheet.dateLastEdited;
 
-    _titleFrominitial = widget.noteInEditing.title;
-    _contentFromInitial = widget.noteInEditing.content;
-
-    if (widget.noteInEditing.id == -1) {
+    if (widget.worksheet.id == -1) {
       _isNewNote = true;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_editableNote.id == -1 && _editableNote.title.isEmpty) {
-      FocusScope.of(context).requestFocus(_titleFocus);
-    }
+    // if (_worksheet.id == -1 && _worksheet.title.isEmpty) {
+    //   FocusScope.of(context).requestFocus(_titleFocus);
+    // }
 
     return WillPopScope(
       child: Scaffold(
@@ -71,7 +62,7 @@ class _NotePageState extends State<NotePage> {
           title: _pageTitle(),
         ),
         body: _body(context),
-        resizeToAvoidBottomPadding: false,
+        resizeToAvoidBottomPadding: true,
       ),
       onWillPop: () => _readyToPop(context),
     );
@@ -82,66 +73,92 @@ class _NotePageState extends State<NotePage> {
         color: _noteColor,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.all(5),
-                  child: EditableText(
-                      onChanged: (str) => {updateNoteObject()},
-                      maxLines: null,
-                      controller: _titleController,
-                      focusNode: _titleFocus,
-                      style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
-                      cursorColor: Colors.blue,
-                      backgroundCursorColor: Colors.blue),
-                ),
-              ),
-              Divider(
-                color: borderColor,
-              ),
-              Flexible(
-                  child: Container(
-                      padding: EdgeInsets.all(5),
-                      child: EditableText(
-                        onChanged: (str) => {updateNoteObject()},
-                        maxLines: 300, // arbitrary...
-                        controller: _contentController,
-                        focusNode: _contentFocus,
-                        style: TextStyle(color: Colors.black, fontSize: 20),
-                        backgroundCursorColor: Colors.red,
-                        cursorColor: Colors.blue,
-                      )))
-            ],
-          ),
-          left: true,
-          right: true,
-          top: false,
-          bottom: false,
-        ));
+            child: SingleChildScrollView(
+                child: Column(children: <Widget>[
+          FormBuilder(
+              // context,
+              key: _fbKey,
+              autovalidate: true,
+              initialValue: {},
+              // readOnly: true,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))
+        ]))));
+
+    //   child: Builder(
+    //       builder: (context) => Form(
+    //           key: _formKey,
+    //           child: Column(
+    //               crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))),
+    //   left: true,
+    //   right: true,
+    //   top: false,
+    //   bottom: false,
+    // ));
+
+    /* return Container(
+                                color: _noteColor,
+                                padding: EdgeInsets.only(left: 16, right: 16, top: 12),
+                                child: SafeArea(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      Flexible(
+                                        child: Container(
+                                          padding: EdgeInsets.all(5),
+                                          child: EditableText(
+                                              onChanged: (str) => {updateNoteObject()},
+                                              maxLines: null,
+                                              controller: _titleController,
+                                              focusNode: _titleFocus,
+                                              style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+                                              cursorColor: Colors.blue,
+                                              backgroundCursorColor: Colors.blue),
+                                        ),
+                                      ),
+                                      Divider(
+                                        color: borderColor,
+                                      ),
+                                      Flexible(
+                                          child: Container(
+                                              padding: EdgeInsets.all(5),
+                                              child: EditableText(
+                                                onChanged: (str) => {updateNoteObject()},
+                                                maxLines: 300, // arbitrary...
+                                                controller: _contentController,
+                                                focusNode: _contentFocus,
+                                                style: TextStyle(color: Colors.black, fontSize: 20),
+                                                backgroundCursorColor: Colors.red,
+                                                cursorColor: Colors.blue,
+                                              )))
+                                    ],
+                                  ),
+                                  left: true,
+                                  right: true,
+                                  top: false,
+                                  bottom: false,
+                                )); */
   }
 
   Widget _pageTitle() {
-    return Text(_editableNote.id == -1 ? "New Note" : "Edit Note");
+    return Text(_worksheet.id == -1 ? "New Note" : "Edit Note");
   }
 
   List<Widget> _archiveAction(BuildContext context) {
     List<Widget> actions = [];
-    if (widget.noteInEditing.id != -1) {
-      actions.add(Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12),
-        child: InkWell(
-          child: GestureDetector(
-            onTap: () => _undo(),
-            child: Icon(
-              Icons.undo,
-              color: fontColor,
-            ),
-          ),
-        ),
-      ));
-    }
+    // if (widget.worksheet.id != -1) {
+    // actions.add(Padding(
+    //   padding: EdgeInsets.symmetric(horizontal: 12),
+    //   child: InkWell(
+    //     child: GestureDetector(
+    //       onTap: () => _undo(),
+    //       child: Icon(
+    //         Icons.undo,
+    //         color: fontColor,
+    //       ),
+    //     ),
+    //   ),
+    // ));
+    // }
     actions += [
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12),
@@ -191,7 +208,7 @@ class _NotePageState extends State<NotePage> {
             color: _noteColor,
             callBackColorTapped: (color) => _changeColor(color, context),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
-            lastModified: _editableNote.dateLastEdited,
+            lastModified: _worksheet.dateLastEdited,
           );
         });
   }
@@ -201,37 +218,42 @@ class _NotePageState extends State<NotePage> {
 
     updateNoteObject();
 
-    if (_editableNote.content.isNotEmpty) {
-      if (_editableNote.id == -1) {
-        notesBloc.inAddNote.add(_editableNote); // for new note
+    if ((_worksheet.content.questions?.length ?? 0) > 0 && _worksheet.content.questions.first.answer != null) {
+      if (_worksheet.id == -1) {
+        notesBloc.inAddNote.add(_worksheet); // for new note
 
         notesBloc.added.listen((value) {
-          _editableNote.id = value;
+          _worksheet.id = value;
         });
       } else {
-        notesBloc.inAddNote.add(_editableNote);
+        notesBloc.inAddNote.add(_worksheet);
       }
     }
   }
 
-// this function will ne used to save the updated editing value of the note to the local variables as user types
+  // this function will ne used to save the updated editing value of the note to the local variables as user types
   void updateNoteObject() {
-    _editableNote.content = _contentController.text;
-    _editableNote.title = _titleController.text;
-    _editableNote.noteColor = _noteColor;
-    print("new content: ${_editableNote.content}");
-    print(widget.noteInEditing);
-    print(_editableNote);
+    // final content = WorksheetContent(questions: [
+    //   Question(question: "what?", answer: _contentController.text, type: QuestionType.freeform, prompt: "huh?")
+    // ], type: NoteType.open_mic);
 
-    print("same title? ${_editableNote.title == _titleFrominitial}");
-    print("same content? ${_editableNote.content == _contentFromInitial}");
+    // final note = Worksheet(
+    //     _titleController.text, content, _worksheet.dateCreated, _worksheet.dateLastEdited, _noteColor,
+    //     id: _worksheet.id);
+    // _worksheet = note;
+    print("new content: ${_worksheet.content}");
+    print(widget.worksheet);
+    print(_worksheet);
 
-    if (!(_editableNote.title == _titleFrominitial && _editableNote.content == _contentFromInitial) || (_isNewNote)) {
-      // No changes to the note
-      // Change last edit time only if the content of the note is mutated in compare to the note which the page was called with.
-      _editableNote.dateLastEdited = DateTime.now();
-      print("Updating date_last_edited");
-    }
+    // print("same title? ${_worksheet.title == _titleFrominitial}");
+    // print("same content? ${_worksheet.content == _contentFromInitial}");
+
+    // if (!(_worksheet.title == _titleFrominitial && _worksheet.content == _contentFromInitial) || (_isNewNote)) {
+    //   // No changes to the note
+    //   // Change last edit time only if the content of the note is mutated in compare to the note which the page was called with.
+    //   _worksheet.dateLastEdited = DateTime.now();
+    //   print("Updating date_last_edited");
+    // }
   }
 
   void bottomSheetOptionTappedHandler(moreOptions tappedOption) {
@@ -239,7 +261,7 @@ class _NotePageState extends State<NotePage> {
     switch (tappedOption) {
       case moreOptions.delete:
         {
-          if (_editableNote.id != -1) {
+          if (_worksheet.id != -1) {
             _deleteNote(_globalKey.currentContext);
           } else {
             _exitWithoutSaving(context);
@@ -248,8 +270,8 @@ class _NotePageState extends State<NotePage> {
         }
       case moreOptions.share:
         {
-          if (_editableNote.content.isNotEmpty) {
-            Share.share("${_editableNote.title}\n${_editableNote.content}");
+          if ((_worksheet.content.questions?.length ?? 0) > 0) {
+            Share.share("${_worksheet.title}\n${_worksheet.content.toMap()}");
           }
           break;
         }
@@ -263,7 +285,7 @@ class _NotePageState extends State<NotePage> {
 
   void _deleteNote(BuildContext context) {
     var notesBloc = Provider.of<NotesBloc>(context);
-    if (_editableNote.id != -1) {
+    if (_worksheet.id != -1) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -274,7 +296,7 @@ class _NotePageState extends State<NotePage> {
                 FlatButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      notesBloc.inDeleteNote.add(_editableNote.id);
+                      notesBloc.inDeleteNote.add(_worksheet.id);
 
                       // Wait for `deleted` to be set before popping back to the main page. This guarantees there's no
                       // mismatch between what's stored in the database and what's being displayed on the page.
@@ -300,34 +322,40 @@ class _NotePageState extends State<NotePage> {
     print("note color changed");
     setState(() {
       _noteColor = newColorSelected;
-      _editableNote.noteColor = newColorSelected;
+      _worksheet.noteColor = newColorSelected;
     });
     _persistColorChange(context);
   }
 
   void _persistColorChange(BuildContext context) {
-    if (_editableNote.id != -1) {
+    if (_worksheet.id != -1) {
       var notesBloc = Provider.of<NotesBloc>(context);
-      _editableNote.noteColor = _noteColor;
-      notesBloc.inAddNote.add(_editableNote);
+      _worksheet.noteColor = _noteColor;
+      notesBloc.inAddNote.add(_worksheet);
     }
   }
 
-  void _saveAndStartNewNote(BuildContext context) {
-    var emptyNote = Note("", "", DateTime.now(), DateTime.now(), Colors.white);
+  void _saveAndStartNewNote(BuildContext context) async {
+    var notesBloc = Provider.of<NotesBloc>(context);
+    final content = (await notesBloc.getWorksheets())[_worksheet.content.type].clone();
+    // final content = notesBloc.getWorksheet(_worksheet.content.type).clone();
+    var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), Colors.white);
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
 
   Future<bool> _readyToPop(BuildContext context) async {
     //show saved toast after calling _persistData function.
-
+    _fbKey.currentState.save();
+    if (_fbKey.currentState.validate()) {
+      print(_fbKey.currentState.value);
+    }
     _persistData(context);
     return true;
   }
 
   void _archivePopup(BuildContext context) {
-    if (_editableNote.id != -1) {
+    if (_worksheet.id != -1) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -353,8 +381,8 @@ class _NotePageState extends State<NotePage> {
     Navigator.of(context).pop();
     var notesBloc = Provider.of<NotesBloc>(context);
     // set archived flag to true and send the entire note object in the database to be updated
-    _editableNote.isArchived = true;
-    notesBloc.inSaveNote.add(_editableNote);
+    _worksheet.isArchived = true;
+    notesBloc.inSaveNote.add(_worksheet);
 
     Navigator.of(context).pop(); // pop back to staggered view
     // TODO: OPTIONAL show the toast of deletion completion
@@ -363,8 +391,8 @@ class _NotePageState extends State<NotePage> {
 
   void _copy() {
     var notesBloc = Provider.of<NotesBloc>(context);
-    Note copy =
-        Note(_editableNote.title, _editableNote.content, DateTime.now(), DateTime.now(), _editableNote.noteColor);
+    Worksheet copy =
+        Worksheet(_worksheet.title, _worksheet.content, DateTime.now(), DateTime.now(), _worksheet.noteColor);
     notesBloc.inAddNote.add(copy);
 
     notesBloc.added.listen((id) {
@@ -376,9 +404,46 @@ class _NotePageState extends State<NotePage> {
     });
   }
 
-  void _undo() {
-    _titleController.text = _titleFrominitial; // widget.noteInEditing.title;
-    _contentController.text = _contentFromInitial; // widget.noteInEditing.content;
-    _editableNote.dateLastEdited = _lastEditedForUndo; // widget.noteInEditing.date_last_edited;
+  List<Widget> _buildQuestions(Worksheet worksheet) {
+    final List<Widget> items = [];
+    worksheet.content.questions.forEach((q) {
+      items.add(Text(
+        q.question == null ? "" : q.question,
+        maxLines: null,
+        style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+      ));
+
+      var formItem;
+
+      if (q.type == QuestionType.multiple) {
+        formItem = FormBuilderRadio(
+          attribute: q.question,
+          decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
+          initialValue: q.answer,
+          // hint: q.prompt == null ? null : Text(q.prompt),
+          validators: [],
+          options: q.values
+              .map((value) => FormBuilderFieldOption(
+                    value: value,
+                  ))
+              .toList(growable: false),
+          onSaved: (val) => q.answer = val,
+        );
+      } else {
+        formItem = FormBuilderTextField(
+          attribute: q.question,
+          initialValue: q.answer,
+          decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
+          validators: [
+            FormBuilderValidators.max(500),
+          ],
+          onSaved: (val) => q.answer = val,
+        );
+      }
+      items.add(formItem);
+      items.add(SizedBox(height: 12));
+    });
+
+    return items;
   }
 }

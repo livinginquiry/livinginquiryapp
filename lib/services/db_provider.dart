@@ -64,7 +64,7 @@ class DbProvider {
     return path;
   }
 
-  Future<int> addNote(Note note) async {
+  Future<int> addNote(Worksheet note) async {
     // Get a reference to the database
     final Database db = await database;
 
@@ -76,7 +76,7 @@ class DbProvider {
     );
   }
 
-  Future<bool> copyNote(Note note) async {
+  Future<bool> copyNote(Worksheet note) async {
     final Database db = await database;
     try {
       await db.insert("notes", note.toMap(false), conflictAlgorithm: ConflictAlgorithm.replace);
@@ -87,7 +87,7 @@ class DbProvider {
     return true;
   }
 
-  Future<void> archiveNote(Note note) async {
+  Future<void> archiveNote(Worksheet note) async {
     if (note.id != -1) {
       final Database db = await database;
 
@@ -103,7 +103,7 @@ class DbProvider {
       await db.delete("notes", where: "id = ?", whereArgs: [id]);
       return true;
     } catch (Error) {
-      print("Error deleting ${id}: ${Error.toString()}");
+      print("Error deleting $id: ${Error.toString()}");
       return false;
     }
   }
@@ -116,12 +116,12 @@ class DbProvider {
     return data;
   }
 
-  Future<List<Note>> getNotes() async {
+  Future<List<Worksheet>> getNotes() async {
     final Database db = await database;
     // query all the notes sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
-
-    List<Note> notes = res.isNotEmpty ? res.map((note) => Note.fromJson(note)).toList() : [];
+    print("got som res $res");
+    List<Worksheet> notes = res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];
 
     return notes;
   }

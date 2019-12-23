@@ -32,3 +32,15 @@ String formatDateTime(DateTime dt) {
 int epochFromDate(DateTime dt) {
   return dt.millisecondsSinceEpoch ~/ 1000;
 }
+
+T getEnumFromString<T>(Iterable<T> values, String value) {
+  return values.firstWhere((type) => enumToString(type) == value, orElse: () => null);
+}
+
+String enumToString<T>(T enm) {
+  return enm.toString().split('.').last;
+}
+
+List<String> enumToStringValues<T>(Iterable<T> values) {
+  return values.map((T val) => enumToString(val)).toList();
+}

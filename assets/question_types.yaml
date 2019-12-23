@@ -1,0 +1,62 @@
+open_mic:
+  display_name: Open Mic
+  questions:
+    - question: ~
+      type: freeform
+      prompt: Start Typing
+one_belief:
+  display_name: One Belief
+  questions:
+    - question: Is it true?
+      type: multiple
+      prompt: ~
+      values: ["true", "false"]
+    - question: Can you absolutely know it’s true?
+      type: multiple
+      prompt: ~
+      values: ["true", "false"]
+    - question: How do you react, what happens, when you believe the thought?
+      type: freeform
+      prompt: ~
+    - question: Who would you be without the thought?
+      type: freeform
+      prompt: ~
+    - question: "Turnarounds \nE.g. He didn’t lie to me"
+      type: freeform
+      prompt: ~
+    - question: E.g. I lied to me
+      type: freeform
+      prompt: ~
+    - question: E.g. I lied to him
+      type: freeform
+      prompt: ~
+    - question: Notes
+      type: freeform
+      prompt: ~
+judge_your_neighbor:
+  display_name: Judge Your Neighbor
+  questions:
+    - question: In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
+      type: freeform
+      prompt: “I'm ___ with ___ because…”
+    - question: In this situation, how do you want him/her to change? What do you want him/her to do?
+      type: freeform
+      prompt: “I want him/her to…”
+    - question: In this situation, what advice would you offer him/her? “He/she should/shouldn’t…”
+      type: freeform
+      prompt: “He/she should/shouldn’t…”
+    - question: In order for you to be happy in this situation, what do you need him/her to think, say, feel, or do?
+      type: freeform
+      prompt: “I need him/her to…”
+    - question: What do you think of him/her in this situation? Make a list. (It’s okay to be petty and judgmental.)
+      type: freeform
+      prompt: “He/she is…”
+    - question: What is it about this person and situation that you don’t ever want to experience again?
+      type: freeform
+      prompt: “I don’t ever want…”
+# zac_test:
+#   display_name: Zac Test
+#   questions:
+#     - question: This is dynamically generated from question_types.yaml
+#       type: freeform
+#       prompt: Better crack on then!

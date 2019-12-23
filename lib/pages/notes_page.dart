@@ -30,9 +30,9 @@ class _NotesPageState extends State<NotesPage> {
     return Container(
         child: Padding(
       padding: _paddingForView(context),
-      child: StreamBuilder<List<Note>>(
+      child: StreamBuilder<List<Worksheet>>(
           stream: notesBloc.notes,
-          builder: (BuildContext context, AsyncSnapshot<List<Note>> snapshot) {
+          builder: (BuildContext context, AsyncSnapshot<List<Worksheet>> snapshot) {
             // Make sure data exists and is actually loaded
             if (snapshot.hasData) {
               // If there are no notes (data), display this message.
@@ -40,13 +40,13 @@ class _NotesPageState extends State<NotesPage> {
                 return Text('No notes');
               }
 
-              List<Note> notes = snapshot.data;
+              List<Worksheet> worksheets = snapshot.data;
 
               return ListView.separated(
                 key: _listKey,
-                itemCount: notes.length,
+                itemCount: worksheets.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return NoteTile(notes[index]);
+                  return NoteTile(worksheets[index]);
                 },
                 padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
                 separatorBuilder: (BuildContext context, int index) {

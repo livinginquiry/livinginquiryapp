@@ -6,14 +6,14 @@ import '../models/util.dart';
 import '../pages/note_page.dart';
 
 class NoteTile extends StatefulWidget {
-  final Note note;
+  final Worksheet note;
   NoteTile(this.note);
   @override
   _NoteTileState createState() => _NoteTileState();
 }
 
 class _NoteTileState extends State<NoteTile> {
-  String _content;
+  WorksheetContent _content;
   double _fontSize;
   Color _tileColor;
   String _title;
@@ -25,16 +25,30 @@ class _NoteTileState extends State<NoteTile> {
     _tileColor = widget.note.noteColor;
     _title = widget.note.title;
 
+    final title = _content.displayName == null ? _content.type : _content.displayName;
+    var card = ClipRRect(
+      borderRadius: BorderRadius.circular(15.0),
+      child: Card(
+          child: ListTile(
+            title: Text(title),
+            trailing: Text(formatDateTime(
+                widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited)),
+          ),
+          shape: Border(top: BorderSide(color: _tileColor, width: 5))),
+    );
+
     return GestureDetector(
       onTap: () => _noteTapped(context),
-      child: Container(
+      child:
+          card /* Container(
         decoration: BoxDecoration(
             border: _tileColor == Colors.white ? Border.all(color: borderColor) : null,
             color: _tileColor,
             borderRadius: BorderRadius.all(Radius.circular(8))),
         padding: EdgeInsets.all(8),
         child: constructChild(),
-      ),
+      ) */
+      ,
     );
   }
 
@@ -62,19 +76,30 @@ class _NoteTileState extends State<NoteTile> {
       );
     }
 
+    debugPrint("dacontent ${_content.toMap()}");
+    final text = _content.displayName == null ? _content.type : _content.displayName;
     tiles.add(AutoSizeText(
-      _content,
+      text,
       style: TextStyle(fontSize: _fontSize),
       maxLines: 10,
-      textScaleFactor: 1.5,
+      textScaleFactor: 1,
     ));
+
+    // tiles.add(AutoSizeText(
+    //   _content,
+    //   style: TextStyle(fontSize: _fontSize),
+    //   maxLines: 10,
+    //   textScaleFactor: 1.5,
+    // ));
 
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: tiles);
   }
 
   double _determineFontSizeForContent() {
-    int charCount = _content.length + widget.note.title.length;
+    final text = (widget.note.content.questions?.length ?? 0) > 0 ? widget.note.content.questions.first.answer : "";
+
+    int charCount = text.length + widget.note.title.length;
     double fontSize = 20;
     if (charCount > 110) {
       fontSize = 12;
