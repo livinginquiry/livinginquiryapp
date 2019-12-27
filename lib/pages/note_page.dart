@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
+import 'package:tinycolor/tinycolor.dart';
 
 import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
@@ -24,8 +25,6 @@ class _NotePageState extends State<NotePage> {
   var _noteColor;
   bool _isNewNote = false;
 
-  // DateTime _lastEditedForUndo;
-
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
@@ -35,7 +34,6 @@ class _NotePageState extends State<NotePage> {
     super.initState();
     _worksheet = widget.worksheet;
     _noteColor = _worksheet.noteColor;
-    // _lastEditedForUndo = widget.worksheet.dateLastEdited;
 
     if (widget.worksheet.id == -1) {
       _isNewNote = true;
@@ -58,7 +56,7 @@ class _NotePageState extends State<NotePage> {
           ),
           actions: _archiveAction(context),
           elevation: 1,
-          backgroundColor: _noteColor,
+          backgroundColor: Colors.white,
           title: _pageTitle(),
         ),
         body: _body(context),
@@ -70,7 +68,10 @@ class _NotePageState extends State<NotePage> {
 
   Widget _body(BuildContext ctx) {
     return Container(
-        color: _noteColor,
+        decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: _noteColor, width: 8)),
+            color: TinyColor(_noteColor).lighten(15).color),
+        // color: TinyColor(_noteColor).lighten(15).color,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
             child: SingleChildScrollView(
@@ -83,60 +84,6 @@ class _NotePageState extends State<NotePage> {
               // readOnly: true,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))
         ]))));
-
-    //   child: Builder(
-    //       builder: (context) => Form(
-    //           key: _formKey,
-    //           child: Column(
-    //               crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))),
-    //   left: true,
-    //   right: true,
-    //   top: false,
-    //   bottom: false,
-    // ));
-
-    /* return Container(
-                                color: _noteColor,
-                                padding: EdgeInsets.only(left: 16, right: 16, top: 12),
-                                child: SafeArea(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      Flexible(
-                                        child: Container(
-                                          padding: EdgeInsets.all(5),
-                                          child: EditableText(
-                                              onChanged: (str) => {updateNoteObject()},
-                                              maxLines: null,
-                                              controller: _titleController,
-                                              focusNode: _titleFocus,
-                                              style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
-                                              cursorColor: Colors.blue,
-                                              backgroundCursorColor: Colors.blue),
-                                        ),
-                                      ),
-                                      Divider(
-                                        color: borderColor,
-                                      ),
-                                      Flexible(
-                                          child: Container(
-                                              padding: EdgeInsets.all(5),
-                                              child: EditableText(
-                                                onChanged: (str) => {updateNoteObject()},
-                                                maxLines: 300, // arbitrary...
-                                                controller: _contentController,
-                                                focusNode: _contentFocus,
-                                                style: TextStyle(color: Colors.black, fontSize: 20),
-                                                backgroundCursorColor: Colors.red,
-                                                cursorColor: Colors.blue,
-                                              )))
-                                    ],
-                                  ),
-                                  left: true,
-                                  right: true,
-                                  top: false,
-                                  bottom: false,
-                                )); */
   }
 
   Widget _pageTitle() {
@@ -145,20 +92,6 @@ class _NotePageState extends State<NotePage> {
 
   List<Widget> _archiveAction(BuildContext context) {
     List<Widget> actions = [];
-    // if (widget.worksheet.id != -1) {
-    // actions.add(Padding(
-    //   padding: EdgeInsets.symmetric(horizontal: 12),
-    //   child: InkWell(
-    //     child: GestureDetector(
-    //       onTap: () => _undo(),
-    //       child: Icon(
-    //         Icons.undo,
-    //         color: fontColor,
-    //       ),
-    //     ),
-    //   ),
-    // ));
-    // }
     actions += [
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12),
