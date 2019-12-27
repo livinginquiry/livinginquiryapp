@@ -28,6 +28,7 @@ class _NotePageState extends State<NotePage> {
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
+  final List<FocusNode> focusNodes = [];
 
   @override
   void initState() {
@@ -38,6 +39,8 @@ class _NotePageState extends State<NotePage> {
     if (widget.worksheet.id == -1) {
       _isNewNote = true;
     }
+
+    _worksheet.content.questions?.forEach((val) => focusNodes.add(FocusNode()));
   }
 
   @override
@@ -339,7 +342,8 @@ class _NotePageState extends State<NotePage> {
 
   List<Widget> _buildQuestions(Worksheet worksheet) {
     final List<Widget> items = [];
-    worksheet.content.questions.forEach((q) {
+
+    worksheet.content.questions.asMap().forEach((index, q) {
       items.add(Text(
         q.question == null ? "" : q.question,
         maxLines: null,
@@ -361,9 +365,15 @@ class _NotePageState extends State<NotePage> {
                   ))
               .toList(growable: false),
           onSaved: (val) => q.answer = val,
+          leadingInput: q.values.length <= 2,
         );
       } else {
-        formItem = FormBuilderTextField(
+        final idx = index;
+        final isLast = index == worksheet.content.questions.length - 1;
+        final item = FormBuilderTextField(
+          autofocus: index == 0,
+          focusNode: focusNodes[idx],
+          textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
           attribute: q.question,
           initialValue: q.answer,
           decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
@@ -371,8 +381,16 @@ class _NotePageState extends State<NotePage> {
             FormBuilderValidators.max(500),
           ],
           onSaved: (val) => q.answer = val,
+          onFieldSubmitted: (val) {
+            focusNodes[idx].unfocus();
+            if (focusNodes.length - 1 > idx) {
+              FocusScope.of(context).requestFocus(focusNodes[idx + 1]);
+            }
+          },
         );
+        formItem = item;
       }
+
       items.add(formItem);
       items.add(SizedBox(height: 12));
     });
