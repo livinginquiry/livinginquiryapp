@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/constants.dart' as constants;
+
 class ColorSlider extends StatefulWidget {
   final void Function(Color) callBackColorTapped;
   final Color noteColor;
@@ -9,21 +11,6 @@ class ColorSlider extends StatefulWidget {
 }
 
 class _ColorSliderState extends State<ColorSlider> {
-  final colors = [
-    Color(0xffffffff), // classic white
-    Color(0xfff28b81), // light pink
-    Color(0xfff7bd02), // yellow
-    Color(0xfffbf476), // light yellow
-    Color(0xffcdff90), // light green
-    Color(0xffa7feeb), // turquoise
-    Color(0xffcbf0f8), // light cyan
-    Color(0xffafcbfa), // light blue
-    Color(0xffd7aefc), // plum
-    Color(0xfffbcfe9), // misty rose
-    Color(0xffe6c9a9), // light brown
-    Color(0xffe9eaee) // light gray
-  ];
-
   final Color borderColor = Color(0xffd3d3d3);
   final Color foregroundColor = Color(0xff595959);
 
@@ -35,14 +22,14 @@ class _ColorSliderState extends State<ColorSlider> {
   void initState() {
     super.initState();
     this.noteColor = widget.noteColor;
-    indexOfCurrentColor = colors.indexOf(noteColor);
+    indexOfCurrentColor = constants.NOTE_COLORS.indexOf(noteColor);
   }
 
   @override
   Widget build(BuildContext context) {
     return ListView(
         scrollDirection: Axis.horizontal,
-        children: List.generate(colors.length, (index) {
+        children: List.generate(constants.NOTE_COLORS.length, (index) {
           return GestureDetector(
               onTap: () => _colorChangeTapped(index),
               child: Padding(
@@ -51,7 +38,7 @@ class _ColorSliderState extends State<ColorSlider> {
                       child: new CircleAvatar(
                         child: _checkOrNot(index),
                         foregroundColor: foregroundColor,
-                        backgroundColor: colors[index],
+                        backgroundColor: constants.NOTE_COLORS[index],
                       ),
                       width: 38.0,
                       height: 38.0,
@@ -65,9 +52,9 @@ class _ColorSliderState extends State<ColorSlider> {
 
   void _colorChangeTapped(int indexOfColor) {
     setState(() {
-      noteColor = colors[indexOfColor];
+      noteColor = constants.NOTE_COLORS[indexOfColor];
       indexOfCurrentColor = indexOfColor;
-      widget.callBackColorTapped(colors[indexOfColor]);
+      widget.callBackColorTapped(constants.NOTE_COLORS[indexOfColor]);
     });
   }
 

@@ -34,6 +34,7 @@ dependencies:
   flutter_speed_dial: ^1.2.5
   font_awesome_flutter: ^8.4.0
   flutter_form_builder: ^3.7.2
+  tinycolor: ^1.0.2
 
 dev_dependencies:
   flutter_test:

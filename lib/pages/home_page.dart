@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
         elevation: 1,
         backgroundColor: Colors.white,
         centerTitle: true,
-        title: Text("Living Inquiry Notes"),
+        title: Text("Living Inquiry"),
       ),
       body: SafeArea(
         child: _body(),
@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> {
   void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
     print("nu note");
     // "-1" id indicates the note is not new
-    var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), Colors.white);
+    var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getRandomNoteColor());
     Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
 

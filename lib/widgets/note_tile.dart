@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:tinycolor/tinycolor.dart';
 
 import '../models/note.dart';
 import '../models/util.dart';
@@ -25,30 +26,35 @@ class _NoteTileState extends State<NoteTile> {
     _tileColor = widget.note.noteColor;
     _title = widget.note.title;
 
-    final title = _content.displayName == null ? _content.type : _content.displayName;
-    var card = ClipRRect(
-      borderRadius: BorderRadius.circular(15.0),
-      child: Card(
-          child: ListTile(
-            title: Text(title),
-            trailing: Text(formatDateTime(
-                widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited)),
+    final subtitle = _content.displayName == null ? _content.type : _content.displayName;
+    final title = (_content.questions?.length ?? 0) == 0
+        ? "--"
+        : ((_content.questions.first.answer?.length ?? 0) == 0 ? "--" : _content.questions.first.answer);
+
+    var card = Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.1, 0.1],
+                colors: [_tileColor, TinyColor(_tileColor).lighten(15).color]),
+            borderRadius: BorderRadius.all(const Radius.circular(8))),
+        padding: EdgeInsets.all(8),
+        child: ListTile(
+          dense: true,
+          title: Text(
+            title,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
-          shape: Border(top: BorderSide(color: _tileColor, width: 5))),
-    );
+          subtitle: Text(subtitle),
+          trailing: Text(formatDateTime(
+              widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited)),
+        ));
 
     return GestureDetector(
       onTap: () => _noteTapped(context),
-      child:
-          card /* Container(
-        decoration: BoxDecoration(
-            border: _tileColor == Colors.white ? Border.all(color: borderColor) : null,
-            color: _tileColor,
-            borderRadius: BorderRadius.all(Radius.circular(8))),
-        padding: EdgeInsets.all(8),
-        child: constructChild(),
-      ) */
-      ,
+      child: card,
     );
   }
 

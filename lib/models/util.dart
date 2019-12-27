@@ -1,9 +1,14 @@
+import "dart:math";
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'constants.dart' as constants;
 
 final fontColor = Color(0xff595959);
 final borderColor = Color(0xffd3d3d3);
 
+final _random = Random();
 String formatDateTime(DateTime dt) {
   var dtInLocal = dt.toLocal();
   var now = DateTime.now().toLocal();
@@ -43,4 +48,14 @@ String enumToString<T>(T enm) {
 
 List<String> enumToStringValues<T>(Iterable<T> values) {
   return values.map((T val) => enumToString(val)).toList();
+}
+
+String toHexString(Color color) {
+  return "#${color.red.toRadixString(16).padLeft(2, "0")}"
+      "${color.green.toRadixString(16).padLeft(2, "0")}"
+      "${color.blue.toRadixString(16).padLeft(2, "0")}";
+}
+
+Color getRandomNoteColor() {
+  return constants.NOTE_COLORS[_random.nextInt(constants.NOTE_COLORS.length - 1) + 1];
 }

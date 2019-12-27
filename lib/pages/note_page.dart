@@ -339,7 +339,7 @@ class _NotePageState extends State<NotePage> {
     var notesBloc = Provider.of<NotesBloc>(context);
     final content = (await notesBloc.getWorksheets())[_worksheet.content.type].clone();
     // final content = notesBloc.getWorksheet(_worksheet.content.type).clone();
-    var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), Colors.white);
+    var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), getRandomNoteColor());
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
@@ -385,7 +385,7 @@ class _NotePageState extends State<NotePage> {
     notesBloc.inSaveNote.add(_worksheet);
 
     Navigator.of(context).pop(); // pop back to staggered view
-    // TODO: OPTIONAL show the toast of deletion completion
+
     Scaffold.of(context).showSnackBar(new SnackBar(content: Text("deleted")));
   }
 

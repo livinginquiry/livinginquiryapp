@@ -7,6 +7,9 @@ open_mic:
 one_belief:
   display_name: One Belief
   questions:
+    - question: What is the thought?
+      type: freeform
+      prompt: ~
     - question: Is it true?
       type: multiple
       prompt: ~
