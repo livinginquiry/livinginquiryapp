@@ -13,11 +13,11 @@ one_belief:
     - question: Is it true?
       type: multiple
       prompt: ~
-      values: ["true", "false"]
+      values: ["yes", "no"]
     - question: Can you absolutely know it’s true?
       type: multiple
       prompt: ~
-      values: ["true", "false"]
+      values: ["yes", "no"]
     - question: How do you react, what happens, when you believe the thought?
       type: freeform
       prompt: ~
