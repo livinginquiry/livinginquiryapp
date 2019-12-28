@@ -24,15 +24,9 @@ one_belief:
     - question: Who would you be without the thought?
       type: freeform
       prompt: ~
-    - question: "Turnarounds \nE.g. He didn’t lie to me"
+    - question: Turnarounds
       type: freeform
-      prompt: ~
-    - question: E.g. I lied to me
-      type: freeform
-      prompt: ~
-    - question: E.g. I lied to him
-      type: freeform
-      prompt: ~
+      prompt: "I lied to me, I lied to him, He didn’t lie to me"
     - question: Notes
       type: freeform
       prompt: ~
