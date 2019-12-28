@@ -3,7 +3,7 @@ open_mic:
   questions:
     - question: ~
       type: freeform
-      prompt: Start Typing
+      prompt: ~
 one_belief:
   display_name: One Belief
   questions:
