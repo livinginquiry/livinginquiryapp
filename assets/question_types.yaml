@@ -33,22 +33,22 @@ one_belief:
 judge_your_neighbor:
   display_name: Judge Your Neighbor
   questions:
-    - question: In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
+    - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
       type: freeform
       prompt: “I'm ___ with ___ because…”
-    - question: In this situation, how do you want him/her to change? What do you want him/her to do?
+    - question: 2. In this situation, how do you want him/her to change? What do you want him/her to do?
       type: freeform
       prompt: “I want him/her to…”
-    - question: In this situation, what advice would you offer him/her? “He/she should/shouldn’t…”
+    - question: 3. In this situation, what advice would you offer him/her? “He/she should/shouldn’t…”
       type: freeform
       prompt: “He/she should/shouldn’t…”
-    - question: In order for you to be happy in this situation, what do you need him/her to think, say, feel, or do?
+    - question: 4. In order for you to be happy in this situation, what do you need him/her to think, say, feel, or do?
       type: freeform
       prompt: “I need him/her to…”
-    - question: What do you think of him/her in this situation? Make a list. (It’s okay to be petty and judgmental.)
+    - question: 5. What do you think of him/her in this situation? Make a list. (It’s okay to be petty and judgmental.)
       type: freeform
       prompt: “He/she is…”
-    - question: What is it about this person and situation that you don’t ever want to experience again?
+    - question: 6. What is it about this person and situation that you don’t ever want to experience again?
       type: freeform
       prompt: “I don’t ever want…”
 # zac_test:
