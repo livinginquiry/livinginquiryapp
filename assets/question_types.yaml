@@ -26,7 +26,7 @@ one_belief:
       prompt: ~
     - question: Turnarounds
       type: freeform
-      prompt: "I lied to me, I lied to him, He didn’t lie to me"
+      prompt: "I hurt me, I hurt him, He didn’t hurt me, He helped me"
     - question: Notes
       type: freeform
       prompt: ~
