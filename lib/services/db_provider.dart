@@ -80,8 +80,8 @@ class DbProvider {
     final Database db = await database;
     try {
       await db.insert("notes", note.toMap(false), conflictAlgorithm: ConflictAlgorithm.replace);
-    } catch (Error) {
-      print(Error);
+    } catch (e) {
+      print(e);
       return false;
     }
     return true;
@@ -102,13 +102,13 @@ class DbProvider {
     try {
       await db.delete("notes", where: "id = ?", whereArgs: [id]);
       return true;
-    } catch (Error) {
-      print("Error deleting $id: ${Error.toString()}");
+    } catch (e) {
+      print("Error deleting $id: ${e.toString()}");
       return false;
     }
   }
 
-  Future<List<Map<String, dynamic>>> selectAllNotes() async {
+  Future<List<Map<String, dynamic>>> selectAllWorksheets() async {
     final Database db = await database;
     // query all the notes sorted by last edited
     var data = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
@@ -116,7 +116,7 @@ class DbProvider {
     return data;
   }
 
-  Future<List<Worksheet>> getNotes() async {
+  Future<List<Worksheet>> getWorksheets() async {
     final Database db = await database;
     // query all the notes sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);

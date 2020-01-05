@@ -43,7 +43,7 @@ class NotesBloc extends ChangeNotifier {
   Map<String, WorksheetContent> _worksheets;
 
   NotesBloc() {
-    _loadWorksheets();
+    _loadInquiryTypes();
     // Retrieve all the notes on initialization
     loadWorksheets();
 
@@ -54,7 +54,7 @@ class NotesBloc extends ChangeNotifier {
   }
 
   Future<Map<String, WorksheetContent>> getWorksheets() {
-    return _loadWorksheets();
+    return _loadInquiryTypes();
   }
 
   // All stream controllers you create should be closed within this function
@@ -67,7 +67,7 @@ class NotesBloc extends ChangeNotifier {
     _noteAddedController.close();
   }
 
-  Future<Map<String, WorksheetContent>> _loadWorksheets() async {
+  Future<Map<String, WorksheetContent>> _loadInquiryTypes() async {
     if (_worksheets != null) {
       return _worksheets;
     }
@@ -83,11 +83,15 @@ class NotesBloc extends ChangeNotifier {
   }
 
   void loadWorksheets() async {
-    // Retrieve all the notes from the database
-    List<Worksheet> notes = await _db.getNotes();
+    try {
+      // Retrieve all the notes from the database
+      List<Worksheet> notes = await _db.getWorksheets();
 
-    // Add all of the notes to the stream so we can grab them later from our pages
-    _inNotes.add(notes);
+      // Add all of the notes to the stream so we can grab them later from our pages
+      _inNotes.add(notes);
+    } catch (e) {
+      print("Couldn't load notes! $e");
+    }
   }
 
   void _handleAddNote(Worksheet note) async {

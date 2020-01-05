@@ -12,7 +12,7 @@ final _random = Random();
 String formatDateTime(DateTime dt) {
   var dtInLocal = dt.toLocal();
   var now = DateTime.now().toLocal();
-  var dateString = "Edited ";
+  var dateString = "";
 
   var diff = now.difference(dtInLocal);
 

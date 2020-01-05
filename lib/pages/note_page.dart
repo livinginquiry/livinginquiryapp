@@ -12,6 +12,8 @@ import '../models/note.dart';
 import '../models/util.dart';
 import '../widgets/options_sheet.dart';
 
+const int MAXIMUM_CHARS = 500;
+
 class NotePage extends StatefulWidget {
   final Worksheet worksheet;
 
@@ -29,7 +31,7 @@ class _NotePageState extends State<NotePage> {
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
   final List<FocusNode> focusNodes = [];
-
+  final List<TextEditingController> _textControllers = [];
   @override
   void initState() {
     super.initState();
@@ -40,7 +42,39 @@ class _NotePageState extends State<NotePage> {
       _isNewNote = true;
     }
 
-    _worksheet.content.questions?.forEach((val) => focusNodes.add(FocusNode()));
+    _worksheet.content.questions?.forEach((val) {
+      focusNodes.add(FocusNode());
+      final controller = TextEditingController();
+      controller.addListener(() {
+        final text = controller.text;
+        if (text.isEmpty) {
+          return;
+        }
+        var transformed = '';
+        final lines = text.split('\n');
+
+        lines.forEach((s) {
+          if (s.isNotEmpty && !s.startsWith('\u2022')) {
+            transformed += "${transformed.isEmpty ? '' : '\n'}\u2022 $s";
+          } else {
+            transformed += "${transformed.isEmpty ? s : '\n' + s}";
+          }
+        });
+
+        if (transformed != text) {
+          final diff = transformed.length - text.length;
+          print("replace! $diff");
+          controller.value = controller.value.copyWith(
+            text: transformed,
+            selection: TextSelection(
+                baseOffset: controller.value.selection.baseOffset + diff,
+                extentOffset: controller.value.selection.extentOffset + diff),
+            composing: TextRange.empty,
+          );
+        }
+      });
+      _textControllers.add(controller);
+    });
   }
 
   @override
@@ -207,7 +241,7 @@ class _NotePageState extends State<NotePage> {
       case moreOptions.share:
         {
           if ((_worksheet.content.questions?.length ?? 0) > 0) {
-            Share.share("${_worksheet.title}\n${_worksheet.content.toMap()}");
+            Share.share("${_worksheet.content.displayName}\n${_worksheet.content.toReadableFormat()}");
           }
           break;
         }
@@ -369,30 +403,42 @@ class _NotePageState extends State<NotePage> {
         );
       } else {
         final idx = index;
+        _textControllers[idx].text = (q.answer?.isEmpty ?? true) ? "\u2022 " : q.answer;
         final isLast = index == worksheet.content.questions.length - 1;
         final item = FormBuilderTextField(
+          // maxLines: 100,
+          textCapitalization: TextCapitalization.sentences,
+          controller: _textControllers[idx],
           autofocus: index == 0,
           focusNode: focusNodes[idx],
-          textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline /* isLast ? TextInputAction.done : TextInputAction.newline */,
           attribute: q.question,
           initialValue: q.answer,
           decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
           validators: [
-            FormBuilderValidators.max(500),
+            FormBuilderValidators.max(MAXIMUM_CHARS),
           ],
-          onSaved: (val) => q.answer = val,
+          onSaved: (val) {
+            print("saving $val");
+            q.answer = val;
+          },
           onFieldSubmitted: (val) {
+            print("submitting $val");
             focusNodes[idx].unfocus();
             if (focusNodes.length - 1 > idx) {
               FocusScope.of(context).requestFocus(focusNodes[idx + 1]);
             }
+          },
+          onEditingComplete: () {
+            print("editing complete");
           },
         );
         formItem = item;
       }
 
       items.add(formItem);
-      items.add(SizedBox(height: 12));
+      items.add(SizedBox(height: 20));
     });
 
     return items;

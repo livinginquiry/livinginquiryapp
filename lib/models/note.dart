@@ -91,6 +91,15 @@ class WorksheetContent {
     return map;
   }
 
+  String toReadableFormat() {
+    String result = "";
+    questions.asMap().forEach((index, q) {
+      result += (index > 0 ? "\n" : "") + q.toFormattedString(index: index + 1);
+    });
+
+    return result;
+  }
+
   WorksheetContent clone() {
     return WorksheetContent.fromMap(toMap());
   }
@@ -137,5 +146,9 @@ class Question {
     map['values'] = values;
     map['type'] = util.enumToString(type);
     return map;
+  }
+
+  String toFormattedString({int index = -1}) {
+    return "${index >= 0 ? index : '-'}. $question\n$answer\n";
   }
 }
