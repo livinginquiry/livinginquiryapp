@@ -91,7 +91,7 @@ class _NotePageState extends State<NotePage> {
           leading: BackButton(
             color: Colors.black,
           ),
-          actions: _archiveAction(context),
+          actions: _buildActions(context),
           elevation: 1,
           backgroundColor: Colors.white,
           title: _pageTitle(),
@@ -127,21 +127,21 @@ class _NotePageState extends State<NotePage> {
     return Text(_worksheet.id == -1 ? "New Note" : "Edit Note");
   }
 
-  List<Widget> _archiveAction(BuildContext context) {
+  List<Widget> _buildActions(BuildContext context) {
     List<Widget> actions = [];
     actions += [
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12),
-        child: InkWell(
-          child: GestureDetector(
-            onTap: () => _archivePopup(context),
-            child: Icon(
-              Icons.archive,
-              color: fontColor,
-            ),
-          ),
-        ),
-      ),
+      // Padding(
+      //   padding: EdgeInsets.symmetric(horizontal: 12),
+      //   child: InkWell(
+      //     child: GestureDetector(
+      //       onTap: () => _archivePopup(context),
+      //       child: Icon(
+      //         Icons.archive,
+      //         color: fontColor,
+      //       ),
+      //     ),
+      //   ),
+      // ),
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12),
         child: InkWell(
@@ -241,6 +241,7 @@ class _NotePageState extends State<NotePage> {
       case moreOptions.share:
         {
           if ((_worksheet.content.questions?.length ?? 0) > 0) {
+            _fbKey.currentState.save();
             Share.share("${_worksheet.content.displayName}\n${_worksheet.content.toReadableFormat()}");
           }
           break;
