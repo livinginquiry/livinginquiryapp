@@ -1,7 +1,7 @@
 open_mic:
   display_name: Open Mic
   questions:
-    - question: ~
+    - question: What's happening for you right now?
       type: freeform
       prompt: ~
 one_belief:
