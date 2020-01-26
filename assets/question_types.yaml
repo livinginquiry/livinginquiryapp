@@ -51,6 +51,10 @@ judge_your_neighbor:
     - question: 6. What is it about this person and situation that you don’t ever want to experience again?
       type: freeform
       prompt: “I don’t ever want…”
+    - question: Notes
+      type: freeform
+      prompt: ~
+
 # zac_test:
 #   display_name: Zac Test
 #   questions:
