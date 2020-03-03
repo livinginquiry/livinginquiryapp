@@ -165,7 +165,7 @@ class _NotePageState extends State<NotePage> {
             ),
           ),
         ),
-      ),
+      ) /* ,
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12),
         child: InkWell(
@@ -177,7 +177,7 @@ class _NotePageState extends State<NotePage> {
             ),
           ),
         ),
-      )
+      ) */
     ];
     return actions;
   }
