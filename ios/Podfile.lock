@@ -32,7 +32,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite/ios"
 
 SPEC CHECKSUMS:
-  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
   flutter_keyboard_visibility: 6195387fb6d8f46e5cd6dda4a4154e41f800f545
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   share: bae0a282aab4483288913fc4dc0b935d4b491f2e
