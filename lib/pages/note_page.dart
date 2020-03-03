@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 import 'package:tinycolor/tinycolor.dart';
@@ -77,6 +78,14 @@ class _NotePageState extends State<NotePage> {
     });
   }
 
+  KeyboardActionsConfig _buildConfig(BuildContext context) {
+    return KeyboardActionsConfig(
+        keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
+        keyboardBarColor: Colors.grey[200],
+        nextFocus: true,
+        actions: this.focusNodes.map((node) => KeyboardAction(focusNode: node)).toList());
+  }
+
   @override
   Widget build(BuildContext context) {
     // if (_worksheet.id == -1 && _worksheet.title.isEmpty) {
@@ -96,7 +105,10 @@ class _NotePageState extends State<NotePage> {
           backgroundColor: Colors.white,
           title: _pageTitle(),
         ),
-        body: _body(context),
+        body: KeyboardActions(
+          config: _buildConfig(context),
+          child: _body(context),
+        ),
         resizeToAvoidBottomPadding: true,
       ),
       onWillPop: () => _readyToPop(context),
