@@ -7,6 +7,7 @@ import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 import 'package:tinycolor/tinycolor.dart';
+import 'package:validators/validators.dart';
 
 import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
@@ -45,36 +46,7 @@ class _NotePageState extends State<NotePage> {
 
     _worksheet.content.questions?.forEach((val) {
       focusNodes.add(FocusNode());
-      final controller = TextEditingController();
-      controller.addListener(() {
-        final text = controller.text;
-        if (text.isEmpty) {
-          return;
-        }
-        var transformed = '';
-        final lines = text.split('\n');
-
-        lines.forEach((s) {
-          if (s.isNotEmpty && !s.startsWith('\u2022')) {
-            transformed += "${transformed.isEmpty ? '' : '\n'}\u2022 $s";
-          } else {
-            transformed += "${transformed.isEmpty ? s : '\n' + s}";
-          }
-        });
-
-        if (transformed != text) {
-          final diff = transformed.length - text.length;
-          print("replace! $diff");
-          controller.value = controller.value.copyWith(
-            text: transformed,
-            selection: TextSelection(
-                baseOffset: controller.value.selection.baseOffset + diff,
-                extentOffset: controller.value.selection.extentOffset + diff),
-            composing: TextRange.empty,
-          );
-        }
-      });
-      _textControllers.add(controller);
+      _textControllers.add(TextEditingController());
     });
   }
 
@@ -416,11 +388,13 @@ class _NotePageState extends State<NotePage> {
         );
       } else {
         final idx = index;
-        _textControllers[idx].text = (q.answer?.isEmpty ?? true) ? "\u2022 " : q.answer;
-        final isLast = index == worksheet.content.questions.length - 1;
+        // _textControllers[idx].text = (q.answer?.isEmpty ?? true) ? "\u2022 " : q.answer;
+        _textControllers[idx].text = q.answer;
+        // final isLast = index == worksheet.content.questions.length - 1;
         final item = FormBuilderTextField(
           // maxLines: 100,
           textCapitalization: TextCapitalization.sentences,
+          inputFormatters: <TextInputFormatter>[_BulletFormatter()],
           controller: _textControllers[idx],
           autofocus: index == 0,
           focusNode: focusNodes[idx],
@@ -455,5 +429,54 @@ class _NotePageState extends State<NotePage> {
     });
 
     return items;
+  }
+}
+
+class _BulletFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final int oldTextLength = oldValue.text.length;
+    final int newTextLength = newValue.text.length;
+    if (newTextLength - oldTextLength == 1 &&
+        newValue.selection.baseOffset == newValue.selection.extentOffset &&
+        newValue.text[newValue.selection.extentOffset - 1] == '\n') {
+      //TODO: see if the previous line had a leading bullet. If not add it!
+      var shift = 2;
+      var prefix = newValue.text.substring(0, newValue.selection.extentOffset);
+      var start = prefix.substring(0, prefix.length).split('').reversed.join().indexOf('\n', 1);
+      if (start < 0) {
+        start = 0;
+      } else {
+        start = prefix.length - start;
+      }
+
+      if (prefix[start] != '\u2022') {
+        prefix = prefix.substring(0, start) + '\u2022 ' + prefix.substring(start, prefix.length);
+        shift += 2;
+      }
+      final transformed = prefix +
+          '\u2022 ' +
+          (newValue.selection.base.offset >= newValue.text.length
+              ? ''
+              : newValue.text.substring(newValue.selection.extentOffset, newValue.text.length));
+      return TextEditingValue(
+        text: transformed.toString(),
+        selection: TextSelection.collapsed(offset: newValue.selection.extentOffset + shift),
+      );
+    } else if (newTextLength - oldTextLength == 1 &&
+        newTextLength > 2 &&
+        newValue.selection.baseOffset == newValue.selection.extentOffset &&
+        isAlphanumeric(newValue.text[newValue.selection.extentOffset - 1]) &&
+        !isUppercase(newValue.text[newValue.selection.extentOffset - 1]) &&
+        newValue.text[newValue.selection.extentOffset - 2] == ' ' &&
+        newValue.text[newValue.selection.extentOffset - 3] == '\u2022') {
+      final text = newValue.text.substring(0, newValue.selection.extentOffset - 1) +
+          newValue.text[newValue.selection.extentOffset - 1].toUpperCase() +
+          (newValue.selection.base.offset >= newValue.text.length
+              ? ''
+              : newValue.text.substring(newValue.selection.extentOffset, newValue.text.length));
+      return TextEditingValue(text: text, selection: newValue.selection);
+    } else
+      return newValue;
   }
 }
