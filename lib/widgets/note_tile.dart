@@ -44,12 +44,12 @@ class _NoteTileState extends State<NoteTile> {
           dense: true,
           title: Text(
             title,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
           ),
-          subtitle: Text(subtitle),
-          trailing: Text(formatDateTime(
-              widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited)),
+          // subtitle: Text(subtitle),
+          subtitle: Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+            Text(formatDateTime(
+                widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
+          ]),
         ));
 
     return GestureDetector(
