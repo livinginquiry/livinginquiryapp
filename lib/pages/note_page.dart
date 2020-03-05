@@ -155,6 +155,7 @@ class _NotePageState extends State<NotePage> {
   }
 
   void bottomSheet(BuildContext context) {
+    _fbKey.currentState.save();
     showModalBottomSheet(
         context: context,
         builder: (BuildContext ctx) {
