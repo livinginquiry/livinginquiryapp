@@ -12,6 +12,8 @@ class NotesPage extends StatefulWidget {
 }
 
 class _NotesPageState extends State<NotesPage> {
+  GlobalKey _listKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +27,6 @@ class _NotesPageState extends State<NotesPage> {
   @override
   Widget build(BuildContext context) {
     var notesBloc = Provider.of<NotesBloc>(context);
-    GlobalKey _listKey = GlobalKey();
 
     return Container(
         child: Padding(
