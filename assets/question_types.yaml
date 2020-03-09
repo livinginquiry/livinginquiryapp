@@ -33,6 +33,9 @@ one_belief:
 judge_your_neighbor:
   display_name: Judge Your Neighbor
   questions:
+    - question: Situation:
+      type: freeform
+      prompt: “Think of a stressful situation”
     - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
       type: freeform
       prompt: “I'm ___ with ___ because…”
