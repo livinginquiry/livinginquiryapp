@@ -7,7 +7,7 @@ open_mic:
 one_belief:
   display_name: One Belief
   questions:
-    - question: What is the thought?
+    - question: Belief:
       type: freeform
       prompt: ~
     - question: 1. Is it true?
@@ -18,13 +18,13 @@ one_belief:
       type: multiple
       prompt: ~
       values: ["yes", "no"]
-    - question: 3. How do you react, what happens, when you believe the thought?
+    - question: 3. How do you react, what happens, when you believe that thought?
       type: freeform
       prompt: ~
     - question: 4. Who would you be without the thought?
       type: freeform
       prompt: ~
-    - question: Turnarounds
+    - question: Turn the thought around.
       type: freeform
       prompt: "I hurt me, I hurt him, He didn’t hurt me, He helped me"
     - question: Notes
