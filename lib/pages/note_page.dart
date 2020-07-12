@@ -24,7 +24,7 @@ class NotePage extends StatefulWidget {
   _NotePageState createState() => _NotePageState();
 }
 
-class _NotePageState extends State<NotePage> {
+class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   Worksheet _worksheet;
   var _noteColor;
   bool _isNewNote = false;
@@ -37,6 +37,7 @@ class _NotePageState extends State<NotePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
     _noteColor = _worksheet.noteColor;
 
@@ -48,6 +49,32 @@ class _NotePageState extends State<NotePage> {
       focusNodes.add(FocusNode());
       _textControllers.add(TextEditingController());
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('state = $state');
+    switch (state) {
+      case AppLifecycleState.inactive:
+        print("Inactive");
+        break;
+      case AppLifecycleState.paused:
+        print("Paused");
+        _readyToPop(this.context);
+        break;
+      case AppLifecycleState.resumed:
+        print("Resumed");
+        break;
+      case AppLifecycleState.detached:
+        print("Detached");
+        break;
+    }
   }
 
   KeyboardActionsConfig _buildConfig(BuildContext context) {
