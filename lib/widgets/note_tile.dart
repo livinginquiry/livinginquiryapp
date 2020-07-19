@@ -44,6 +44,7 @@ class _NoteTileState extends State<NoteTile> {
           dense: true,
           title: Text(
             title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
           ),
           // subtitle: Text(subtitle),
           subtitle: Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[

@@ -7,7 +7,7 @@ open_mic:
 one_belief:
   display_name: One Belief
   questions:
-    - question: Belief:
+    - question: "Belief:"
       type: freeform
       prompt: ~
     - question: 1. Is it true?
@@ -33,7 +33,7 @@ one_belief:
 judge_your_neighbor:
   display_name: Judge Your Neighbor
   questions:
-    - question: Situation:
+    - question: "Situation:"
       type: freeform
       prompt: “Think of a stressful situation”
     - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
@@ -57,9 +57,9 @@ judge_your_neighbor:
     - question: Notes
       type: freeform
       prompt: ~
-
 # zac_test:
 #   display_name: Zac Test
+
 #   questions:
 #     - question: This is dynamically generated from question_types.yaml
 #       type: freeform
