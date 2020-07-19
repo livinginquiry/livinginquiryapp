@@ -424,7 +424,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           textCapitalization: TextCapitalization.sentences,
           inputFormatters: <TextInputFormatter>[_BulletFormatter()],
           controller: _textControllers[idx],
-          autofocus: index == 0,
+          autofocus: index == 0 && _isNewNote,
           focusNode: focusNodes[idx],
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline /* isLast ? TextInputAction.done : TextInputAction.newline */,
