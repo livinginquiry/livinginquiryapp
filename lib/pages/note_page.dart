@@ -82,7 +82,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
         keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
         keyboardBarColor: Colors.grey[200],
         nextFocus: true,
-        actions: this.focusNodes.map((node) => KeyboardAction(focusNode: node)).toList());
+        actions: this.focusNodes.map((node) => KeyboardActionsItem(focusNode: node)).toList());
   }
 
   @override
@@ -104,10 +104,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           backgroundColor: Colors.white,
           title: _pageTitle(),
         ),
-        body: KeyboardActions(
-          config: _buildConfig(context),
-          child: _body(context),
-        ),
+        body: KeyboardActions(config: _buildConfig(context), child: _body(context)),
         resizeToAvoidBottomPadding: true,
       ),
       onWillPop: () => _readyToPop(context),
@@ -122,8 +119,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
         // color: TinyColor(_noteColor).lighten(15).color,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
-            child: SingleChildScrollView(
-                child: Column(children: <Widget>[
+            child: Column(children: <Widget>[
           FormBuilder(
               // context,
               key: _fbKey,
@@ -131,7 +127,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
               initialValue: {},
               // readOnly: true,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))
-        ]))));
+        ])));
   }
 
   Widget _pageTitle() {

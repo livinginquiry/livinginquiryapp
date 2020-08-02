@@ -94,6 +94,15 @@ class NotesBloc extends ChangeNotifier {
     }
   }
 
+  Future<List<Worksheet>> exportWorksheets() async {
+    try {
+      return await _db.getWorksheets();
+    } catch (e) {
+      print("Couldn't load notes! $e");
+    }
+    return null;
+  }
+
   void _handleAddNote(Worksheet note) async {
     // Create the note in the database
     int id = await _db.addNote(note);

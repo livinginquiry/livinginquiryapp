@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
+import 'package:share/share.dart';
 
 import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
@@ -136,38 +137,36 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> _appBarActions(BuildContext context) {
     return [
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12),
-        child: InkWell(
-          child: GestureDetector(
-            onTap: () => _moreButtonPressed(context),
-            child: Icon(
-              Icons.more_vert,
-              color: fontColor,
-            ),
+      PopupMenuButton<String>(
+        onSelected: (value) => _moreButtonPressed(context),
+        itemBuilder: (BuildContext context) {
+          return {'Share all'}.map((String choice) {
+            return PopupMenuItem<String>(
+              value: choice,
+              child: Text(choice),
+            );
+          }).toList();
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(
+            Icons.more_vert,
+            color: fontColor,
           ),
         ),
       ),
     ];
+    // return [
+
+    // ];
   }
 
-  Future<void> _moreButtonPressed(BuildContext context) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Nothing here!'),
-          content: const Text('This literally does nothing'),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _moreButtonPressed(BuildContext context) async {
+    var notesBloc = Provider.of<NotesBloc>(context);
+    String result = "";
+    (await notesBloc.exportWorksheets()).forEach((v) {
+      result += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
+    });
+    Share.share(result);
   }
 }
