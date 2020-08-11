@@ -9,6 +9,7 @@ import '../models/note.dart';
 class DbProvider {
   final databaseName = "notes.db";
   final tableName = "notes";
+  static const migrationScripts = ['alter table notes add column is_complete integer default 0;'];
 
   final fieldMap = {
     "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -17,7 +18,8 @@ class DbProvider {
     "date_created": "INTEGER",
     "date_last_edited": "INTEGER",
     "note_color": "INTEGER",
-    "is_archived": "INTEGER"
+    "is_archived": "INTEGER",
+    "is_complete": "INTEGER"
   };
 
   Database _database;
@@ -29,17 +31,28 @@ class DbProvider {
     return _database;
   }
 
+  deleteDb() async {
+    var path = await getDatabasesPath();
+    await deleteDatabase(path);
+  }
+
   initDB() async {
     var path = await getDatabasesPath();
     var dbPath = join(path, 'notes.db');
     // ignore: argument_type_not_assignable
-    Database dbConnection = await openDatabase(dbPath, version: 1, onCreate: (Database db, int version) async {
+    Database dbConnection = await openDatabase(dbPath, version: 2, onCreate: (Database db, int version) async {
       print("executing create query from onCreate callback");
       await db.execute(_buildCreateQuery());
+    }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
+      print("upgrading from $oldVersion to $newVersion");
+      for (var i = oldVersion - 1; i < newVersion - 1; i++) {
+        print("upgrada");
+        await db.execute(migrationScripts[i]);
+        print("post mkraba");
+      }
     });
 
     await dbConnection.execute(_buildCreateQuery());
-    _buildCreateQuery();
     return dbConnection;
   }
 
@@ -120,7 +133,7 @@ class DbProvider {
     final Database db = await database;
     // query all the notes sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
-    print("got som res $res");
+    print("darez ${res[0]['is_complete']}");
     List<Worksheet> notes = res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];
 
     return notes;

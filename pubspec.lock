@@ -165,6 +165,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.3.0"
+  lazy_evaluation:
+    dependency: "direct main"
+    description:
+      name: lazy_evaluation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.6+3"
   matcher:
     dependency: transitive
     description:

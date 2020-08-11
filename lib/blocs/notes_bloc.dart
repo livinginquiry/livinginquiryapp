@@ -12,13 +12,22 @@ class NotesBloc extends ChangeNotifier {
   DbProvider _db = locator<DbProvider>();
   // Create a broadcast controller that allows this stream to be listened
   // to multiple times. This is the primary, if not only, type of stream you'll be using.
-  final _notesController = StreamController<List<Worksheet>>.broadcast();
+  final _notesControllerDone = StreamController<List<Worksheet>>.broadcast();
+  final _notesControllerStarted = StreamController<List<Worksheet>>.broadcast();
 
   // Input stream. We add our notes to the stream using this variable.
-  StreamSink<List<Worksheet>> get _inNotes => _notesController.sink;
+  StreamSink<List<Worksheet>> get _inNotesDone => _notesControllerDone.sink;
+  StreamSink<List<Worksheet>> get _inNotesStarted => _notesControllerStarted.sink;
 
   // Output stream. This one will be used within our pages to display the notes.
-  Stream<List<Worksheet>> get notes => _notesController.stream;
+  Stream<List<Worksheet>> get notesDone => _notesControllerDone.stream;
+  Stream<List<Worksheet>> get notesStarted => _notesControllerStarted.stream;
+
+  // List<Stream<Worksheet>> get notes => StreamSplitter.splitFrom(_notesController.stream, 2);
+  // var multistream = Lazy<StreamSplitter<List<Worksheet>>>(() => StreamSplitter(_notesController.stream));
+
+  // Stream<Worksheet> get notesDone => notes.first.where((item) => item.isComplete);
+  // Stream<Worksheet> get notesStarted => notes.first.where((item) => !item.isComplete);
 
   // Input stream for adding new notes. We'll call this from our pages.
   final _addNoteController = StreamController<Worksheet>.broadcast();
@@ -59,7 +68,8 @@ class NotesBloc extends ChangeNotifier {
 
   // All stream controllers you create should be closed within this function
   void dispose() {
-    _notesController.close();
+    _notesControllerDone.close();
+    _notesControllerStarted.close();
     _addNoteController.close();
     _saveNoteController.close();
     _deleteNoteController.close();
@@ -88,9 +98,10 @@ class NotesBloc extends ChangeNotifier {
       List<Worksheet> notes = await _db.getWorksheets();
 
       // Add all of the notes to the stream so we can grab them later from our pages
-      _inNotes.add(notes);
-    } catch (e) {
-      print("Couldn't load notes! $e");
+      _inNotesDone.add(notes.where((item) => item.isComplete).toList());
+      _inNotesStarted.add(notes.where((item) => !item.isComplete).toList());
+    } catch (e, stacktrace) {
+      print("Couldn't load worksheets! $e $stacktrace");
     }
   }
 
@@ -98,7 +109,7 @@ class NotesBloc extends ChangeNotifier {
     try {
       return await _db.getWorksheets();
     } catch (e) {
-      print("Couldn't load notes! $e");
+      print("Couldn't load worksheets for export! $e");
     }
     return null;
   }

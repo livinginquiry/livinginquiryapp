@@ -12,9 +12,10 @@ class Worksheet {
   DateTime dateLastEdited;
   Color noteColor;
   bool isArchived;
+  bool isComplete;
 
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
-      {this.id = -1, this.isArchived = false});
+      {this.id = -1, this.isArchived = false, this.isComplete = false});
 
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
@@ -23,7 +24,8 @@ class Worksheet {
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.value,
-      'is_archived': isArchived ? 1 : 0 //  for later use for integrating archiving
+      'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
+      'is_complete': isComplete ? 1 : 0
     };
     if (forUpdate) {
       data["id"] = this.id;
@@ -37,7 +39,8 @@ class Worksheet {
       DateTime.fromMillisecondsSinceEpoch(json["date_created"] * 1000),
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
       Color(json["note_color"]),
-      id: json["id"]);
+      id: json["id"],
+      isComplete: (json['is_complete'] ?? 0) == 1);
 
   void archiveThisNote() {
     isArchived = true;
@@ -52,7 +55,8 @@ class Worksheet {
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.toString(),
-      'is_archived': isArchived
+      'is_archived': isArchived,
+      'is_complete': isComplete
     }.toString();
   }
 }

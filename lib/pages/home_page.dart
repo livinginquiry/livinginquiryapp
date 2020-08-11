@@ -22,66 +22,73 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomPadding: false,
-      appBar: AppBar(
-        brightness: Brightness.light,
-        actions: _appBarActions(context),
-        elevation: 1,
-        backgroundColor: Colors.white,
-        centerTitle: true,
-        title: Text("Living Inquiry"),
-      ),
-      body: SafeArea(
-        child: _body(),
-        right: true,
-        left: true,
-        top: true,
-        bottom: true,
-      ),
-      bottomSheet: _bottomBar(),
-      floatingActionButton: FutureBuilder(
-        future: _getProfileMenu(),
-        builder: (BuildContext context, AsyncSnapshot<List<SpeedDialChild>> snapshot) {
-          if (snapshot.hasData) {
-            return SpeedDial(
-              animatedIcon: AnimatedIcons.menu_close,
-              animatedIconTheme: IconThemeData(size: 22.0),
-              // child: Icon(Icons.add),
-              onOpen: () => print('OPENING DIAL'),
-              onClose: () => print('DIAL CLOSED'),
-              visible: true,
-              curve: Curves.bounceIn,
-              children: snapshot.data,
-            );
-          } else {
-            return CircularProgressIndicator();
-          }
-        },
-      ),
-      // SpeedDial(
-      //   animatedIcon: AnimatedIcons.menu_close,
-      //   animatedIconTheme: IconThemeData(size: 22.0),
-      //   // child: Icon(Icons.add),
-      //   onOpen: () => print('OPENING DIAL'),
-      //   onClose: () => print('DIAL CLOSED'),
-      //   visible: true,
-      //   curve: Curves.bounceIn,
-      //   children: _getProfileMenu(),
-      // ),
-
-      // UnicornDialer(
-      //   parentButtonBackground: Colors.grey[700],
-      //   orientation: UnicornOrientation.HORIZONTAL,
-      //   parentButton: Icon(Icons.person),
-      //   childButtons: _getProfileMenu(),
-      // ),
-      /* FloatingActionButton(
-        onPressed: () => _newNoteTapped(context),
-        child: Icon(Icons.add),
-        elevation: 20.0,
-      ), */
-    );
+    return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          resizeToAvoidBottomPadding: false,
+          appBar: AppBar(
+            brightness: Brightness.light,
+            actions: _appBarActions(context),
+            elevation: 0,
+            backgroundColor: Colors.white,
+            centerTitle: true,
+            title: Text("Living Inquiry"),
+            bottom: TabBar(
+              unselectedLabelColor: Colors.redAccent,
+              indicatorSize: TabBarIndicatorSize.label,
+              indicator: BoxDecoration(borderRadius: BorderRadius.circular(80), color: Colors.redAccent),
+              tabs: [
+                Tab(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(80), border: Border.all(color: Colors.redAccent, width: 1)),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text("DONE"),
+                    ),
+                  ),
+                ),
+                Tab(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(80), border: Border.all(color: Colors.redAccent, width: 1)),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text("STARTED"),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          body: SafeArea(
+            child: _body(),
+            right: true,
+            left: true,
+            top: true,
+            bottom: true,
+          ),
+          bottomSheet: _bottomBar(),
+          floatingActionButton: FutureBuilder(
+            future: _getProfileMenu(),
+            builder: (BuildContext context, AsyncSnapshot<List<SpeedDialChild>> snapshot) {
+              if (snapshot.hasData) {
+                return SpeedDial(
+                  animatedIcon: AnimatedIcons.menu_close,
+                  animatedIconTheme: IconThemeData(size: 22.0),
+                  // child: Icon(Icons.add),
+                  onOpen: () => print('OPENING DIAL'),
+                  onClose: () => print('DIAL CLOSED'),
+                  visible: true,
+                  curve: Curves.bounceIn,
+                  children: snapshot.data,
+                );
+              } else {
+                return CircularProgressIndicator();
+              }
+            },
+          ),
+        ));
   }
 
   SpeedDialChild _profileOption({IconData iconData, Function onPressed, String label}) {
@@ -118,7 +125,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _body() {
-    return Container(child: NotesPage());
+    return TabBarView(
+        children: <Widget>[Container(child: NotesPage(showDone: false)), Container(child: NotesPage(showDone: true))]);
   }
 
   Widget _bottomBar() {

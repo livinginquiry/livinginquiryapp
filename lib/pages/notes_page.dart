@@ -6,13 +6,17 @@ import '../models/note.dart';
 import '../widgets/note_tile.dart';
 
 class NotesPage extends StatefulWidget {
-  const NotesPage({Key key}) : super(key: key);
+  final bool showDone;
+  const NotesPage({@required this.showDone, Key key}) : super(key: key);
   @override
   _NotesPageState createState() => _NotesPageState();
 }
 
-class _NotesPageState extends State<NotesPage> {
+class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixin<NotesPage> {
   GlobalKey _listKey = GlobalKey();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -32,13 +36,13 @@ class _NotesPageState extends State<NotesPage> {
         child: Padding(
       padding: _paddingForView(context),
       child: StreamBuilder<List<Worksheet>>(
-          stream: notesBloc.notes,
+          stream: widget.showDone ? notesBloc.notesDone : notesBloc.notesStarted,
           builder: (BuildContext context, AsyncSnapshot<List<Worksheet>> snapshot) {
             // Make sure data exists and is actually loaded
             if (snapshot.hasData) {
               // If there are no notes (data), display this message.
               if (snapshot.data.length == 0) {
-                return Text('No notes');
+                return Center(child: Text('Empty'));
               }
 
               List<Worksheet> worksheets = snapshot.data;
@@ -56,6 +60,8 @@ class _NotesPageState extends State<NotesPage> {
                   );
                 },
               );
+            } else {
+              return Center(child: Text('Totes no notes'));
             }
 
             // If the data is loading in, display a progress indicator
@@ -71,7 +77,7 @@ class _NotesPageState extends State<NotesPage> {
   EdgeInsets _paddingForView(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double padding;
-    double topBottom = 8;
+    double topBottom = 5;
     if (width > 500) {
       padding = (width) * 0.05; // 5% padding of width on both side
     } else {

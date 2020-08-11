@@ -28,12 +28,12 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   Worksheet _worksheet;
   var _noteColor;
   bool _isNewNote = false;
-
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
   final List<FocusNode> focusNodes = [];
   final List<TextEditingController> _textControllers = [];
+
   @override
   void initState() {
     super.initState();
@@ -126,7 +126,27 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
               autovalidate: true,
               initialValue: {},
               // readOnly: true,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet)))
+              child:
+                  Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet))),
+          Center(
+            child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Text("Mark as done"),
+                  Switch(
+                    value: this._worksheet.isComplete,
+                    onChanged: (value) {
+                      setState(() {
+                        this._worksheet.isComplete = value;
+                        _fbKey.currentState.save();
+                      });
+                    },
+                    activeTrackColor: Colors.lightGreenAccent,
+                    activeColor: Colors.green,
+                  )
+                ]),
+          ),
         ])));
   }
 
