@@ -31,7 +31,7 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
   @override
   Widget build(BuildContext context) {
     var notesBloc = Provider.of<NotesBloc>(context);
-
+    notesBloc.loadWorksheets();
     return Container(
         child: Padding(
       padding: _paddingForView(context),

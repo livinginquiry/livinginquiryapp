@@ -23,12 +23,6 @@ class NotesBloc extends ChangeNotifier {
   Stream<List<Worksheet>> get notesDone => _notesControllerDone.stream;
   Stream<List<Worksheet>> get notesStarted => _notesControllerStarted.stream;
 
-  // List<Stream<Worksheet>> get notes => StreamSplitter.splitFrom(_notesController.stream, 2);
-  // var multistream = Lazy<StreamSplitter<List<Worksheet>>>(() => StreamSplitter(_notesController.stream));
-
-  // Stream<Worksheet> get notesDone => notes.first.where((item) => item.isComplete);
-  // Stream<Worksheet> get notesStarted => notes.first.where((item) => !item.isComplete);
-
   // Input stream for adding new notes. We'll call this from our pages.
   final _addNoteController = StreamController<Worksheet>.broadcast();
   StreamSink<Worksheet> get inAddNote => _addNoteController.sink;
@@ -53,8 +47,6 @@ class NotesBloc extends ChangeNotifier {
 
   NotesBloc() {
     _loadInquiryTypes();
-    // Retrieve all the notes on initialization
-    loadWorksheets();
 
     // Listens for changes to the addNoteController and calls _handleAddNote on change
     _addNoteController.stream.listen(_handleAddNote);
@@ -86,9 +78,8 @@ class NotesBloc extends ChangeNotifier {
 
     print(doc);
 
-    print("my worksheets is $_worksheets");
+    print("my worksheets is ${_worksheets.length}");
 
-    // questions.map((f, k) => MapEntry(f, k));
     return _worksheets;
   }
 

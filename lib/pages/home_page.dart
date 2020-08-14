@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(80), border: Border.all(color: Colors.redAccent, width: 1)),
                     child: Align(
                       alignment: Alignment.center,
-                      child: Text("DONE"),
+                      child: Text("STARTED"),
                     ),
                   ),
                 ),
@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(80), border: Border.all(color: Colors.redAccent, width: 1)),
                     child: Align(
                       alignment: Alignment.center,
-                      child: Text("STARTED"),
+                      child: Text("DONE"),
                     ),
                   ),
                 )
