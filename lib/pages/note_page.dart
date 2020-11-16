@@ -123,7 +123,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           FormBuilder(
               // context,
               key: _fbKey,
-              autovalidate: true,
+              autovalidateMode: AutovalidateMode.always,
               initialValue: {},
               // readOnly: true,
               child:
@@ -436,7 +436,8 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
         _textControllers[idx].text = q.answer;
         // final isLast = index == worksheet.content.questions.length - 1;
         final item = FormBuilderTextField(
-          // maxLines: 100,
+          maxLines: null,
+          readOnly: false,
           textCapitalization: TextCapitalization.sentences,
           inputFormatters: <TextInputFormatter>[_BulletFormatter()],
           controller: _textControllers[idx],
@@ -445,7 +446,6 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline /* isLast ? TextInputAction.done : TextInputAction.newline */,
           attribute: q.question,
-          initialValue: q.answer,
           decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
           validators: [
             FormBuilderValidators.max(MAXIMUM_CHARS),

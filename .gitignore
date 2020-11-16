@@ -39,3 +39,5 @@ lib/generated_plugin_registrant.dart
 android/**/.project
 android/**/.settings
 android/**/.classpath
+/ios/Flutter/.last_build_id
+/.vscode
