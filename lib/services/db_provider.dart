@@ -133,7 +133,6 @@ class DbProvider {
     final Database db = await database;
     // query all the notes sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
-    print("darez ${res[0]['is_complete']}");
     List<Worksheet> notes = res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];
 
     return notes;

@@ -1,6 +1,9 @@
 open_mic:
   display_name: Open Mic
   questions:
+    - question: What is it about?
+      type: freeform
+      prompt: ~
     - question: What's happening for you right now?
       type: freeform
       prompt: ~
@@ -57,10 +60,3 @@ judge_your_neighbor:
     - question: Notes
       type: freeform
       prompt: ~
-# zac_test:
-#   display_name: Zac Test
-
-#   questions:
-#     - question: This is dynamically generated from question_types.yaml
-#       type: freeform
-#       prompt: Better crack on then!
