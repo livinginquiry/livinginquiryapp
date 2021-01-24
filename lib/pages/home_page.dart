@@ -139,7 +139,7 @@ class _HomePageState extends State<HomePage> {
   void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
     print("nu note");
     // "-1" id indicates the note is not new
-    var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getRandomNoteColor());
+    var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialNoteColor());
     Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
 

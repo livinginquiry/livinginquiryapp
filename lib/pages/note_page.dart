@@ -338,7 +338,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     var notesBloc = Provider.of<NotesBloc>(context);
     final content = (await notesBloc.getWorksheets())[_worksheet.content.type].clone();
     // final content = notesBloc.getWorksheet(_worksheet.content.type).clone();
-    var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), getRandomNoteColor());
+    var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), getInitialNoteColor());
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }

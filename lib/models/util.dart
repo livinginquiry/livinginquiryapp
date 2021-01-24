@@ -56,6 +56,6 @@ String toHexString(Color color) {
       "${color.blue.toRadixString(16).padLeft(2, "0")}";
 }
 
-Color getRandomNoteColor() {
-  return constants.NOTE_COLORS[_random.nextInt(constants.NOTE_COLORS.length - 1) + 1];
+Color getInitialNoteColor() {
+  return constants.NOTE_COLORS[0];
 }
