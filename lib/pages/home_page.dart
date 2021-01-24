@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
             brightness: Brightness.light,
             actions: _appBarActions(context),
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.grey[200],
             centerTitle: true,
             title: Text("Living Inquiry"),
             bottom: TabBar(

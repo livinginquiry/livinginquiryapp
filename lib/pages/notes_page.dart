@@ -33,45 +33,46 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
     var notesBloc = Provider.of<NotesBloc>(context);
     notesBloc.loadWorksheets();
     return Container(
+        color: Colors.grey[200],
         child: Padding(
-      padding: _paddingForView(context),
-      child: StreamBuilder<List<Worksheet>>(
-          stream: widget.showDone ? notesBloc.notesDone : notesBloc.notesStarted,
-          builder: (BuildContext context, AsyncSnapshot<List<Worksheet>> snapshot) {
-            // Make sure data exists and is actually loaded
-            if (snapshot.hasData) {
-              // If there are no notes (data), display this message.
-              if (snapshot.data.length == 0) {
-                return Center(child: Text('Empty'));
-              }
+          padding: _paddingForView(context),
+          child: StreamBuilder<List<Worksheet>>(
+              stream: widget.showDone ? notesBloc.notesDone : notesBloc.notesStarted,
+              builder: (BuildContext context, AsyncSnapshot<List<Worksheet>> snapshot) {
+                // Make sure data exists and is actually loaded
+                if (snapshot.hasData) {
+                  // If there are no notes (data), display this message.
+                  if (snapshot.data.length == 0) {
+                    return Center(child: Text('Empty'));
+                  }
 
-              List<Worksheet> worksheets = snapshot.data;
+                  List<Worksheet> worksheets = snapshot.data;
 
-              return ListView.separated(
-                key: _listKey,
-                itemCount: worksheets.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return NoteTile(worksheets[index]);
-                },
-                padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
-                separatorBuilder: (BuildContext context, int index) {
-                  return SizedBox(
-                    height: 10,
+                  return ListView.separated(
+                    key: _listKey,
+                    itemCount: worksheets.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return NoteTile(worksheets[index]);
+                    },
+                    padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
+                    separatorBuilder: (BuildContext context, int index) {
+                      return SizedBox(
+                        height: 10,
+                      );
+                    },
                   );
-                },
-              );
-            } else {
-              return Center(child: Text('Totes no notes'));
-            }
+                } else {
+                  return Center(child: Text('Totes no notes'));
+                }
 
-            // If the data is loading in, display a progress indicator
-            // to indicate that. You don't have to use a progress
-            // indicator, but the StreamBuilder has to return a widget.
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }),
-    ));
+                // If the data is loading in, display a progress indicator
+                // to indicate that. You don't have to use a progress
+                // indicator, but the StreamBuilder has to return a widget.
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }),
+        ));
   }
 
   EdgeInsets _paddingForView(BuildContext context) {
