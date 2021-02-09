@@ -33,7 +33,7 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
     var notesBloc = Provider.of<NotesBloc>(context);
     notesBloc.loadWorksheets();
     return Container(
-        color: Colors.grey[200],
+        color: Theme.of(context).canvasColor,
         child: Padding(
           padding: _paddingForView(context),
           child: StreamBuilder<List<Worksheet>>(

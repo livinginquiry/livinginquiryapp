@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:livinginquiryapp/models/theme.dart';
 import 'package:provider/provider.dart';
 
 import './blocs/notes_bloc.dart';
@@ -33,14 +33,7 @@ class _MyAppState extends State<MyApp> {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Living Inquiry App',
-          theme: ThemeData(
-            fontFamily: "Roboto",
-            iconTheme: IconThemeData(color: Colors.black),
-            primaryTextTheme: TextTheme(
-              title: TextStyle(color: Colors.black),
-            ),
-            primarySwatch: Colors.blue,
-          ),
+          theme: lightTheme,
           home: HomePage(),
         ));
   }
