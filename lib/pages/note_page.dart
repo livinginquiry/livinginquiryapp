@@ -105,7 +105,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           title: _pageTitle(),
         ),
         body: KeyboardActions(config: _buildConfig(context), child: _body(context)),
-        resizeToAvoidBottomPadding: true,
+        resizeToAvoidBottomInset: true,
       ),
       onWillPop: () => _readyToPop(context),
     );
@@ -212,7 +212,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   }
 
   void _persistData(BuildContext context) {
-    var notesBloc = Provider.of<NotesBloc>(context);
+    var notesBloc = Provider.of<NotesBloc>(context, listen: false);
 
     updateNoteObject();
 
@@ -283,7 +283,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   }
 
   void _deleteNote(BuildContext context) {
-    var notesBloc = Provider.of<NotesBloc>(context);
+    var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     if (_worksheet.id != -1) {
       showDialog(
           context: context,
@@ -328,14 +328,14 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
 
   void _persistColorChange(BuildContext context) {
     if (_worksheet.id != -1) {
-      var notesBloc = Provider.of<NotesBloc>(context);
+      var notesBloc = Provider.of<NotesBloc>(context, listen: false);
       _worksheet.noteColor = _noteColor;
       notesBloc.inAddNote.add(_worksheet);
     }
   }
 
   void _saveAndStartNewNote(BuildContext context) async {
-    var notesBloc = Provider.of<NotesBloc>(context);
+    var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     final content = (await notesBloc.getWorksheets())[_worksheet.content.type].clone();
     // final content = notesBloc.getWorksheet(_worksheet.content.type).clone();
     var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), getInitialNoteColor());
@@ -378,7 +378,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
 
   void _archiveThisNote(BuildContext context) {
     Navigator.of(context).pop();
-    var notesBloc = Provider.of<NotesBloc>(context);
+    var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     // set archived flag to true and send the entire note object in the database to be updated
     _worksheet.isArchived = true;
     notesBloc.inSaveNote.add(_worksheet);
@@ -389,7 +389,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   }
 
   void _copy() {
-    var notesBloc = Provider.of<NotesBloc>(context);
+    var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     Worksheet copy =
         Worksheet(_worksheet.title, _worksheet.content, DateTime.now(), DateTime.now(), _worksheet.noteColor);
     notesBloc.inAddNote.add(copy);
@@ -416,19 +416,19 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
       var formItem;
 
       if (q.type == QuestionType.multiple) {
-        formItem = FormBuilderRadio(
-          attribute: q.question,
+        formItem = FormBuilderRadioGroup(
+          name: q.question,
           decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
           initialValue: q.answer,
           // hint: q.prompt == null ? null : Text(q.prompt),
-          validators: [],
+          validator: null,
           options: q.values
               .map((value) => FormBuilderFieldOption(
                     value: value,
                   ))
               .toList(growable: false),
           onSaved: (val) => q.answer = val,
-          leadingInput: q.values.length <= 2,
+          // leadingInput: q.values.length <= 2,
         );
       } else {
         final idx = index;
@@ -445,16 +445,14 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           focusNode: focusNodes[idx],
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline /* isLast ? TextInputAction.done : TextInputAction.newline */,
-          attribute: q.question,
+          name: q.question,
           decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
-          validators: [
-            FormBuilderValidators.max(MAXIMUM_CHARS),
-          ],
+          validator: FormBuilderValidators.max(context, MAXIMUM_CHARS),
           onSaved: (val) {
             print("saving $val");
             q.answer = val;
           },
-          onFieldSubmitted: (val) {
+          onSubmitted: (val) {
             print("submitting $val");
             focusNodes[idx].unfocus();
             if (focusNodes.length - 1 > idx) {

@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             }
           });
           return Scaffold(
-            resizeToAvoidBottomPadding: false,
+            resizeToAvoidBottomInset: false,
             appBar: PreferredSize(
                 preferredSize: Size(double.infinity, 60),
                 child: AppBar(
