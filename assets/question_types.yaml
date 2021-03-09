@@ -13,6 +13,9 @@ one_belief:
     - question: "Belief:"
       type: freeform
       prompt: ~
+    - question: "Situation:"
+      type: freeform
+      prompt: ~
     - question: 1. Is it true?
       type: multiple
       prompt: ~
