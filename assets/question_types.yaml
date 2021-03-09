@@ -4,7 +4,7 @@ open_mic:
     - question: What is it about?
       type: freeform
       prompt: ~
-    - question: What's happening for you right now?
+    - question: Notes
       type: freeform
       prompt: ~
 one_belief:
