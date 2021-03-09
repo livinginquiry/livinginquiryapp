@@ -1,5 +1,5 @@
 open_mic:
-  display_name: Open Mic
+  display_name: Open Note
   questions:
     - question: What is it about?
       type: freeform
@@ -8,7 +8,7 @@ open_mic:
       type: freeform
       prompt: ~
 one_belief:
-  display_name: One Belief
+  display_name: One Belief at a Time
   questions:
     - question: "Belief:"
       type: freeform
