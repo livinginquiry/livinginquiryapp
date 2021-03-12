@@ -160,7 +160,7 @@ ThemeData lightTheme = ThemeData(
     dividerTheme: DividerThemeData(
         //divider, vertical divider theme
         ),
-    buttonBarTheme: ButtonBarThemeData(
+    buttonBarTheme: ButtonBarThemeData(buttonTextTheme: ButtonTextTheme.normal
         // button bar theme
         ),
     fontFamily: 'ROBOTO',
