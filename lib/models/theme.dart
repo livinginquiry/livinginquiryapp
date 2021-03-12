@@ -46,9 +46,9 @@ ThemeData lightTheme = ThemeData(
         ),
     buttonColor: Color(0xFF1E21CA),
     secondaryHeaderColor: Colors.grey,
-    textSelectionColor: Color(0xffB5BFD3),
-    cursorColor: Color(0xff936F3E),
-    textSelectionHandleColor: Color(0xff936F3E),
+    // textSelectionColor: Color(0xffB5BFD3),
+    // cursorColor: Color(0xff936F3E),
+    // textSelectionHandleColor: Color(0xff936F3E),
     backgroundColor: Colors.white,
     dialogBackgroundColor: Colors.white,
     indicatorColor: Color(0xff457BE0),
@@ -107,7 +107,6 @@ ThemeData lightTheme = ThemeData(
         selectedColor: Colors.white
         // chip theme
         ),
-    platform: TargetPlatform.android,
     materialTapTargetSize: MaterialTapTargetSize.padded,
     applyElevationOverlayColor: true,
     pageTransitionsTheme: PageTransitionsTheme(
@@ -212,9 +211,9 @@ ThemeData darkTheme = ThemeData(
         ),
     buttonColor: Color(0xff483112),
     secondaryHeaderColor: Colors.grey,
-    textSelectionColor: Color(0x1a483112),
-    cursorColor: Color(0xff483112),
-    textSelectionHandleColor: Color(0xff483112),
+    // textSelectionColor: Color(0x1a483112),
+    // cursorColor: Color(0xff483112),
+    // textSelectionHandleColor: Color(0xff483112),
     backgroundColor: Color(0xff457BE0),
     dialogBackgroundColor: Colors.white,
     indicatorColor: Color(0xff457BE0),
@@ -273,7 +272,6 @@ ThemeData darkTheme = ThemeData(
         selectedColor: Colors.white
         // chip theme
         ),
-    platform: TargetPlatform.android,
     materialTapTargetSize: MaterialTapTargetSize.padded,
     applyElevationOverlayColor: true,
     pageTransitionsTheme: PageTransitionsTheme(
