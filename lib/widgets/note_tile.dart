@@ -1,6 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:tinycolor/tinycolor.dart';
 
 import '../models/note.dart';
 import '../models/util.dart';
@@ -26,32 +25,29 @@ class _NoteTileState extends State<NoteTile> {
     _tileColor = widget.note.noteColor;
     _title = widget.note.title;
 
-    final subtitle = _content.displayName == null ? _content.type : _content.displayName;
+    final subtitle = _buildSubtitle(_content);
     final title = (_content.questions?.length ?? 0) == 0
         ? "--"
         : ((_content.questions.first.answer?.length ?? 0) == 0 ? "--" : _content.questions.first.answer);
 
     var card = Container(
-        decoration: BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.1, 0.1],
-                colors: [_tileColor, TinyColor(_tileColor).lighten(15).color]),
-            borderRadius: BorderRadius.all(const Radius.circular(8))),
-        padding: EdgeInsets.all(8),
         child: ListTile(
-          dense: true,
-          title: Text(
-            title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-          ),
-          // subtitle: Text(subtitle),
-          subtitle: Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-            Text(formatDateTime(
-                widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
-          ]),
-        ));
+      tileColor: _tileColor,
+      dense: false,
+      title: Text(
+        title,
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Column(children: [
+        SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
+        SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+          Text(
+              formatDateTime(widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
+        ])
+      ]),
+    ));
 
     return GestureDetector(
       onTap: () => _noteTapped(context),
@@ -92,13 +88,6 @@ class _NoteTileState extends State<NoteTile> {
       textScaleFactor: 1,
     ));
 
-    // tiles.add(AutoSizeText(
-    //   _content,
-    //   style: TextStyle(fontSize: _fontSize),
-    //   maxLines: 10,
-    //   textScaleFactor: 1.5,
-    // ));
-
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: tiles);
   }
@@ -119,5 +108,16 @@ class _NoteTileState extends State<NoteTile> {
     }
 
     return fontSize;
+  }
+
+  String _buildSubtitle(WorksheetContent content) {
+    switch (content.type) {
+      case WorksheetType.judgeYourNeighbor:
+      case WorksheetType.oneBelief:
+      case WorksheetType.openMic:
+        return (_content.questions?.length ?? 0) <= 1
+            ? "--"
+            : ((_content.questions[1].answer?.length ?? 0) == 0 ? "--" : _content.questions[1].answer);
+    }
   }
 }

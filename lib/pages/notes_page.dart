@@ -24,18 +24,13 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
   }
 
   @override
-  void setState(fn) {
-    super.setState(fn);
-  }
-
-  @override
   Widget build(BuildContext context) {
     var notesBloc = Provider.of<NotesBloc>(context);
     notesBloc.loadWorksheets();
     return Container(
-        color: Theme.of(context).canvasColor,
+        color: Colors.white,
         child: Padding(
-          padding: _paddingForView(context),
+          padding: EdgeInsets.zero,
           child: StreamBuilder<List<Worksheet>>(
               stream: widget.showDone ? notesBloc.notesDone : notesBloc.notesStarted,
               builder: (BuildContext context, AsyncSnapshot<List<Worksheet>> snapshot) {
@@ -54,36 +49,17 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
                     itemBuilder: (BuildContext context, int index) {
                       return NoteTile(worksheets[index]);
                     },
-                    padding: EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
                     separatorBuilder: (BuildContext context, int index) {
                       return SizedBox(
-                        height: 10,
+                        width: 0,
+                        height: 2,
                       );
                     },
                   );
                 } else {
                   return Center(child: Text('Totes no notes'));
                 }
-
-                // If the data is loading in, display a progress indicator
-                // to indicate that. You don't have to use a progress
-                // indicator, but the StreamBuilder has to return a widget.
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
               }),
         ));
-  }
-
-  EdgeInsets _paddingForView(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    double padding;
-    double topBottom = 5;
-    if (width > 500) {
-      padding = (width) * 0.05; // 5% padding of width on both side
-    } else {
-      padding = 8;
-    }
-    return EdgeInsets.only(left: padding, right: padding, top: topBottom, bottom: topBottom);
   }
 }

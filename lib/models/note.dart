@@ -61,9 +61,11 @@ class Worksheet {
   }
 }
 
+enum WorksheetType { openMic, oneBelief, judgeYourNeighbor }
+
 class WorksheetContent {
   final List<Question> questions;
-  final String type;
+  final WorksheetType type;
   final String displayName;
   WorksheetContent({@required this.questions, @required this.type, @required this.displayName});
 
@@ -74,7 +76,7 @@ class WorksheetContent {
                 : (data['questions'] as List<dynamic>)
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
-            type: type,
+            type: util.enumFromString(WorksheetType.values, type, snakeCase: true),
             displayName: data['display_name']);
 
   WorksheetContent.fromMap(Map<dynamic, dynamic> data)
@@ -84,13 +86,13 @@ class WorksheetContent {
                 : (data['questions'] as List<dynamic>)
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
-            type: data['type'],
+            type: util.enumFromString(WorksheetType.values, data['type'], snakeCase: true),
             displayName: data['display_name']);
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
     map['questions'] = questions == null ? null : questions.map((p) => p.toMap()).toList();
-    map['type'] = type;
+    map['type'] = util.enumToString(type, snakeCase: true);
     map['display_name'] = displayName;
     return map;
   }
@@ -128,9 +130,8 @@ class Question {
             answer: data['answer'],
             prompt: data['prompt'],
             values: data['values'] == null ? null : List<String>.from(data['values']),
-            type: data['type'] != null
-                ? util.getEnumFromString(QuestionType.values, data['type'])
-                : QuestionType.freeform);
+            type:
+                data['type'] != null ? util.enumFromString(QuestionType.values, data['type']) : QuestionType.freeform);
 
   // Question.fromYamlMap(Map<dynamic, dynamic> data)
   //     : this(
