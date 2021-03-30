@@ -12,10 +12,10 @@ one_belief:
   questions:
     - question: "Belief:"
       type: freeform
-      prompt: "Write down a stressful thought"
+      prompt: Write down a stressful thought
     - question: "Situation:"
       type: freeform
-      prompt: "What was the situation?"
+      prompt: What was the situation?
     - question: 1. Is it true?
       type: multiple
       prompt: ~
@@ -32,7 +32,7 @@ one_belief:
       prompt: ~
     - question: Turn the thought around.
       type: freeform
-      prompt: "Is the opposite as true or truer?"
+      prompt: Is the opposite as true or truer?
     - question: Notes
       type: freeform
       prompt: ~
@@ -41,7 +41,7 @@ judge_your_neighbor:
   questions:
     - question: "Situation:"
       type: freeform
-      prompt: “Think of a stressful situation”
+      prompt: Think of a stressful situation
     - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
       type: freeform
       prompt: “I'm ____ with ____ because…”
