@@ -12,10 +12,10 @@ one_belief:
   questions:
     - question: "Belief:"
       type: freeform
-      prompt: ~
+      prompt: "Write down a stressful thought"
     - question: "Situation:"
       type: freeform
-      prompt: ~
+      prompt: "What was the situation?"
     - question: 1. Is it true?
       type: multiple
       prompt: ~
