@@ -32,7 +32,7 @@ one_belief:
       prompt: ~
     - question: Turn the thought around.
       type: freeform
-      prompt: "I hurt me, I hurt him, He didn’t hurt me, He helped me"
+      prompt: "Is the opposite as true or truer?"
     - question: Notes
       type: freeform
       prompt: ~
