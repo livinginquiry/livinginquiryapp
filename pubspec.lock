@@ -175,10 +175,12 @@ packages:
   flutter_speed_dial:
     dependency: "direct main"
     description:
-      name: flutter_speed_dial
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.1"
+      path: "."
+      ref: new
+      resolved-ref: d0df2b4fe34bae60ad5b1bdd7cfefda24fd397eb
+      url: "git@github.com:darioielardi/flutter_speed_dial.git"
+    source: git
+    version: "3.0.5"
   flutter_test:
     dependency: "direct dev"
     description: flutter

@@ -100,13 +100,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   return SpeedDial(
                     animatedIcon: AnimatedIcons.menu_close,
                     animatedIconTheme: IconThemeData(size: 22.0),
-                    foregroundColor: Theme.of(context).accentColor,
-                    backgroundColor: Theme.of(context).dialogBackgroundColor,
+                    foregroundColor: Theme.of(context).backgroundColor,
+                    backgroundColor: Theme.of(context).accentColor,
                     onOpen: () => print('OPENING DIAL'),
                     onClose: () => print('DIAL CLOSED'),
                     visible: true,
                     curve: Curves.bounceIn,
                     children: snapshot.data,
+                    renderOverlay: true,
+                    elevation: 8.0,
                   );
                 } else {
                   return CircularProgressIndicator();
@@ -117,14 +119,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         }));
   }
 
-  SpeedDialChild _profileOption({IconData iconData, Function onPressed, String label}) {
-    return SpeedDialChild(
-        child: Icon(iconData),
-        onTap: onPressed,
-        label: label,
-        labelStyle: TextStyle(fontWeight: FontWeight.w500),
-        labelBackgroundColor: Theme.of(context).backgroundColor,
-        backgroundColor: Theme.of(context).colorScheme.background);
+  SpeedDialChild _profileOption({Function onPressed, String label}) {
+    final labelWidget = Container(
+      padding: EdgeInsets.symmetric(vertical: 9.0, horizontal: 14.0),
+      margin: EdgeInsetsDirectional.zero,
+      decoration: BoxDecoration(
+        color: Theme.of(context).accentColor,
+        borderRadius: BorderRadius.all(Radius.circular(6.0)),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.7), offset: Offset(0.8, 0.8), blurRadius: 2.4)],
+      ),
+      child: Text(label.toUpperCase(),
+          style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor)),
+    );
+
+    return SpeedDialChild(onTap: onPressed, labelWidget: labelWidget, elevation: 10
+        // label: label.toUpperCase(),
+        // labelStyle: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor),
+        // labelBackgroundColor: Theme.of(context).accentColor,
+        // backgroundColor: Theme.of(context).colorScheme.background
+        );
   }
 
   Future<List<SpeedDialChild>> _getProfileMenu() async {
@@ -132,8 +145,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     var notesBloc = Provider.of<NotesBloc>(context);
     (await notesBloc.getWorksheets()).forEach((k, v) {
-      children.add(_profileOption(
-          iconData: Icons.format_list_bulleted, onPressed: () => _newNoteTapped(context, v), label: v.displayName));
+      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName));
     });
     return children;
   }

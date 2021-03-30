@@ -31,7 +31,7 @@ dependencies:
   get_it: ^6.0.0
   provider: ^5.0.0
   yaml: ^3.1.0
-  flutter_speed_dial: ^2.1.1
+  # flutter_speed_dial: ^3.0.5
   font_awesome_flutter: ^8.4.0
   flutter_form_builder: ^5.0.0-alpha.1
   tinycolor: ^1.0.2
@@ -39,6 +39,10 @@ dependencies:
   lazy_evaluation: ^0.0.6+3
   basic_utils: ^2.7.1
   # flutter_keyboard_visibility: ^5.0.0
+  flutter_speed_dial:
+    git:
+      url: git@github.com:darioielardi/flutter_speed_dial.git
+      ref: new
 
 dev_dependencies:
   flutter_test:
