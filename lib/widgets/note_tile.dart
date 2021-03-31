@@ -26,9 +26,7 @@ class _NoteTileState extends State<NoteTile> {
     _title = widget.note.title;
 
     final subtitle = _buildSubtitle(_content);
-    final title = (_content.questions?.length ?? 0) == 0
-        ? "--"
-        : ((_content.questions.first.answer?.length ?? 0) == 0 ? "--" : _content.questions.first.answer);
+    final title = _buildTitle(_content);
 
     var card = Container(
         child: ListTile(
@@ -110,14 +108,25 @@ class _NoteTileState extends State<NoteTile> {
     return fontSize;
   }
 
+  String _buildTitle(WorksheetContent content) {
+    if ((_content.questions?.length ?? 0) == 0)
+      return "--";
+    else if ((_content.questions.first.answer?.length ?? 0) == 0)
+      return "--";
+    else {
+      var text = _content.questions.first.answer.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
+      return truncateWithEllipsis(text, 100);
+    }
+  }
+
   String _buildSubtitle(WorksheetContent content) {
-    switch (content.type) {
-      case WorksheetType.judgeYourNeighbor:
-      case WorksheetType.oneBelief:
-      case WorksheetType.openMic:
-        return (_content.questions?.length ?? 0) <= 1
-            ? "--"
-            : ((_content.questions[1].answer?.length ?? 0) == 0 ? "--" : _content.questions[1].answer);
+    if ((_content.questions?.length ?? 0) <= 1)
+      return "--";
+    else if ((_content.questions[1].answer?.length ?? 0) <= 1)
+      return "--";
+    else {
+      var text = _content.questions[1].answer.split("\n").map((String l) => l.trim()).take(2).join("\n");
+      return truncateWithEllipsis(text, 150);
     }
   }
 }
