@@ -6,7 +6,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
-import 'package:tinycolor/tinycolor.dart';
 import 'package:validators/validators.dart';
 
 import '../blocs/notes_bloc.dart';
@@ -113,10 +112,10 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
 
   Widget _body(BuildContext ctx) {
     return Container(
-        decoration: BoxDecoration(
+        /* decoration: BoxDecoration(
             border: Border(top: BorderSide(color: _noteColor, width: 8)),
-            color: TinyColor(_noteColor).lighten(15).color),
-        // color: TinyColor(_noteColor).lighten(15).color,
+            color: TinyColor(_noteColor).lighten(15).color), */
+        color: _noteColor,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
             child: Column(children: <Widget>[
@@ -201,6 +200,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     _fbKey.currentState.save();
     showModalBottomSheet(
         context: context,
+        // backgroundColor: Colors.white,
         builder: (BuildContext ctx) {
           return OptionsSheet(
             color: _noteColor,
