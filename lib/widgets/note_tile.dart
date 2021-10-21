@@ -29,23 +29,23 @@ class _NoteTileState extends State<NoteTile> {
     final title = _buildTitle(_content);
 
     var card = Container(
+        color: _tileColor,
         child: ListTile(
-      tileColor: _tileColor,
-      dense: false,
-      title: Text(
-        title,
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      subtitle: Column(children: [
-        SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
-        SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-          Text(
-              formatDateTime(widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
-        ])
-      ]),
-    ));
+          dense: false,
+          title: Text(
+            title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Column(children: [
+            SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
+            SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+              Text(formatDateTime(
+                  widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
+            ])
+          ]),
+        ));
 
     return GestureDetector(
       onTap: () => _noteTapped(context),

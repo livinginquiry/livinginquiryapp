@@ -43,19 +43,12 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
 
                   List<Worksheet> worksheets = snapshot.data;
 
-                  return ListView.separated(
-                    key: _listKey,
-                    itemCount: worksheets.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return NoteTile(worksheets[index]);
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return SizedBox(
-                        width: 0,
-                        height: 2,
-                      );
-                    },
-                  );
+                  return ListView.builder(
+                      key: _listKey,
+                      itemCount: worksheets.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return NoteTile(worksheets[index]);
+                      });
                 } else {
                   return Center(child: Text('Totes no notes'));
                 }
