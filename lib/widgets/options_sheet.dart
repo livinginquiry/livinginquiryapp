@@ -31,7 +31,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: this.noteColor,
+      color: Colors.white,
       child: new Wrap(
         children: <Widget>[
           new ListTile(
@@ -85,7 +85,6 @@ class _OptionsSheetState extends State<OptionsSheet> {
 
   void _changeColor(Color color) {
     setState(() {
-      this.noteColor = color;
       widget.callBackColorTapped(color);
     });
   }
