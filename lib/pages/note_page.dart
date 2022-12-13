@@ -25,7 +25,7 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
-  Worksheet? _worksheet;
+  late Worksheet _worksheet;
   var _noteColor;
   bool _isNewNote = false;
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
@@ -39,13 +39,13 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
-    _noteColor = _worksheet!.noteColor;
+    _noteColor = _worksheet.noteColor;
 
     if (widget.worksheet.id == -1) {
       _isNewNote = true;
     }
 
-    _worksheet!.content.questions?.forEach((val) {
+    _worksheet.content.questions?.forEach((val) {
       focusNodes.add(FocusNode());
       _textControllers.add(TextEditingController());
     });
@@ -127,7 +127,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
               initialValue: {},
               // readOnly: true,
               child:
-                  Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet!))),
+                  Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet))),
           Center(
             child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -135,10 +135,10 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
                 children: <Widget>[
                   Text("Mark as done"),
                   Switch(
-                    value: this._worksheet!.isComplete,
+                    value: this._worksheet.isComplete,
                     onChanged: (value) {
                       setState(() {
-                        this._worksheet!.isComplete = value;
+                        this._worksheet.isComplete = value;
                         _fbKey.currentState!.save();
                       });
                     },
@@ -151,7 +151,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   }
 
   Widget _pageTitle() {
-    return Text(_worksheet!.id == -1 ? "New Note" : "Edit Note");
+    return Text(_worksheet.id == -1 ? "New Note" : "Edit Note");
   }
 
   List<Widget> _buildActions(BuildContext context) {
@@ -207,7 +207,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
             color: _noteColor,
             callBackColorTapped: (color) => _changeColor(color, context),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
-            lastModified: _worksheet!.dateLastEdited,
+            lastModified: _worksheet.dateLastEdited,
           );
         });
   }
@@ -217,12 +217,12 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
 
     updateNoteObject();
 
-    if ((_worksheet!.content.questions?.length ?? 0) > 0 && _worksheet!.content.questions!.first.answer != null) {
-      if (_worksheet!.id == -1) {
+    if ((_worksheet.content.questions?.length ?? 0) > 0 && _worksheet.content.questions!.first.answer != null) {
+      if (_worksheet.id == -1) {
         notesBloc.inAddNote.add(_worksheet); // for new note
 
         notesBloc.added.listen((value) {
-          _worksheet!.id = value;
+          _worksheet.id = value;
         });
       } else {
         notesBloc.inAddNote.add(_worksheet);
@@ -240,7 +240,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     //     _titleController.text, content, _worksheet.dateCreated, _worksheet.dateLastEdited, _noteColor,
     //     id: _worksheet.id);
     // _worksheet = note;
-    print("new content: ${_worksheet!.content}");
+    print("new content: ${_worksheet.content}");
     print(widget.worksheet);
     print(_worksheet);
 
@@ -260,7 +260,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     switch (tappedOption) {
       case moreOptions.delete:
         {
-          if (_worksheet!.id != -1) {
+          if (_worksheet.id != -1) {
             _deleteNote(_globalKey.currentContext!);
           } else {
             _exitWithoutSaving(context);
@@ -269,9 +269,9 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
         }
       case moreOptions.share:
         {
-          if ((_worksheet!.content.questions?.length ?? 0) > 0) {
+          if ((_worksheet.content.questions?.length ?? 0) > 0) {
             _fbKey.currentState!.save();
-            Share.share("${_worksheet!.content.displayName}\n${_worksheet!.content.toReadableFormat()}");
+            Share.share("${_worksheet.content.displayName}\n${_worksheet.content.toReadableFormat()}");
           }
           break;
         }
@@ -285,7 +285,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
 
   void _deleteNote(BuildContext context) {
     var notesBloc = Provider.of<NotesBloc>(context, listen: false);
-    if (_worksheet!.id != -1) {
+    if (_worksheet.id != -1) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -296,7 +296,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
                 TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      notesBloc.inDeleteNote.add(_worksheet!.id);
+                      notesBloc.inDeleteNote.add(_worksheet.id);
 
                       // Wait for `deleted` to be set before popping back to the main page. This guarantees there's no
                       // mismatch between what's stored in the database and what's being displayed on the page.
@@ -318,26 +318,27 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     }
   }
 
+  // TODO: Use BLOC
   void _changeColor(Color newColorSelected, BuildContext context) {
     print("note color changed");
     setState(() {
       _noteColor = newColorSelected;
-      _worksheet!.noteColor = newColorSelected;
+      _worksheet.noteColor = newColorSelected;
     });
     _persistColorChange(context);
   }
 
   void _persistColorChange(BuildContext context) {
-    if (_worksheet!.id != -1) {
+    if (_worksheet.id != -1) {
       var notesBloc = Provider.of<NotesBloc>(context, listen: false);
-      _worksheet!.noteColor = _noteColor;
+      _worksheet.noteColor = _noteColor;
       notesBloc.inAddNote.add(_worksheet);
     }
   }
 
   void _saveAndStartNewNote(BuildContext context) async {
     var notesBloc = Provider.of<NotesBloc>(context, listen: false);
-    final content = (await notesBloc.getWorksheets())![_worksheet!.content.type as String]!.clone();
+    final content = (await notesBloc.getWorksheets())![_worksheet.content.type as String]!.clone();
     // final content = notesBloc.getWorksheet(_worksheet.content.type).clone();
     var emptyNote = Worksheet("", content, DateTime.now(), DateTime.now(), getInitialNoteColor());
     Navigator.of(context).pop();
@@ -355,7 +356,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   }
 
   void _archivePopup(BuildContext context) {
-    if (_worksheet!.id != -1) {
+    if (_worksheet.id != -1) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -381,7 +382,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
     Navigator.of(context).pop();
     var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     // set archived flag to true and send the entire note object in the database to be updated
-    _worksheet!.isArchived = true;
+    _worksheet.isArchived = true;
     notesBloc.inSaveNote.add(_worksheet);
 
     Navigator.of(context).pop(); // pop back to staggered view
@@ -392,7 +393,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   void _copy() {
     var notesBloc = Provider.of<NotesBloc>(context, listen: false);
     Worksheet copy =
-        Worksheet(_worksheet!.title, _worksheet!.content, DateTime.now(), DateTime.now(), _worksheet!.noteColor);
+        Worksheet(_worksheet.title, _worksheet.content, DateTime.now(), DateTime.now(), _worksheet.noteColor);
     notesBloc.inAddNote.add(copy);
 
     notesBloc.added.listen((id) {
@@ -407,9 +408,9 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
   List<Widget> _buildQuestions(Worksheet worksheet) {
     final List<Widget> items = [];
 
-    worksheet.content.questions!.asMap().forEach((index, q) {
+    worksheet.content.questions?.asMap().forEach((index, q) {
       items.add(Text(
-        q.question == null ? "" : q.question!,
+        q.question,
         maxLines: null,
         style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
       ));
@@ -434,7 +435,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
       } else {
         final idx = index;
         // _textControllers[idx].text = (q.answer?.isEmpty ?? true) ? "\u2022 " : q.answer;
-        _textControllers[idx].text = q.answer!;
+        _textControllers[idx].text = q.answer;
         // final isLast = index == worksheet.content.questions.length - 1;
         final item = FormBuilderTextField(
           maxLines: null,
@@ -451,7 +452,7 @@ class _NotePageState extends State<NotePage> with WidgetsBindingObserver {
           validator: FormBuilderValidators.max(MAXIMUM_CHARS),
           onSaved: (val) {
             print("saving $val");
-            q.answer = val;
+            q.answer = val ?? "";
           },
           onSubmitted: (val) {
             print("submitting $val");

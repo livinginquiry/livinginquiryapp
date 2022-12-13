@@ -24,12 +24,7 @@ class DbProvider {
 
   Database? _database;
 
-  Future<Database?> get database async {
-    if (_database != null) return _database;
-
-    _database = await initDB();
-    return _database;
-  }
+  Future<Database> get database async => _database ??= await initDB();
 
   deleteDb() async {
     var path = await getDatabasesPath();
@@ -79,7 +74,7 @@ class DbProvider {
 
   Future<int> addNote(Worksheet note) async {
     // Get a reference to the database
-    final Database db = await (database as FutureOr<Database>);
+    final Database db = await database;
 
     // Insert the Notes into the correct table.
     return await db.insert(
@@ -110,7 +105,7 @@ class DbProvider {
     }
   }
 
-  Future<void> deleteNote(int? id) async {
+  Future<bool> deleteNote(int? id) async {
     final Database db = await (database as FutureOr<Database>);
     try {
       await db.delete("notes", where: "id = ?", whereArgs: [id]);

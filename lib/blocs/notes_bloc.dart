@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:yaml/yaml.dart';
 
-import '../locator.dart';
+// import '../locator.dart';
 import '../models/note.dart';
 import '../services/db_provider.dart';
 
 class NotesBloc extends ChangeNotifier {
-  DbProvider? _db = locator<DbProvider>();
+  DbProvider _db = DbProvider();
+  // DbProvider? _db = locator<DbProvider>();
   // Create a broadcast controller that allows this stream to be listened
   // to multiple times. This is the primary, if not only, type of stream you'll be using.
   final _notesControllerDone = StreamController<List<Worksheet>>.broadcast();

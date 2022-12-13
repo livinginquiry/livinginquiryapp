@@ -6,13 +6,14 @@ import 'color_slider.dart';
 enum moreOptions { delete, share, copy }
 
 class OptionsSheet extends StatefulWidget {
-  final Color? color;
+  final Color color;
   final DateTime? lastModified;
-  final void Function(Color)? callBackColorTapped;
+  final void Function(Color) callBackColorTapped;
 
   final void Function(moreOptions)? callBackOptionTapped;
 
-  const OptionsSheet({Key? key, this.color, this.lastModified, this.callBackColorTapped, this.callBackOptionTapped})
+  const OptionsSheet(
+      {Key? key, required this.color, this.lastModified, required this.callBackColorTapped, this.callBackOptionTapped})
       : super(key: key);
 
   @override
@@ -20,7 +21,7 @@ class OptionsSheet extends StatefulWidget {
 }
 
 class _OptionsSheetState extends State<OptionsSheet> {
-  Color? noteColor;
+  late Color noteColor;
 
   @override
   void initState() {
@@ -83,9 +84,10 @@ class _OptionsSheetState extends State<OptionsSheet> {
     );
   }
 
+  // TODO: Use BLOC!
   void _changeColor(Color color) {
     setState(() {
-      widget.callBackColorTapped!(color);
+      widget.callBackColorTapped(color);
     });
   }
 }

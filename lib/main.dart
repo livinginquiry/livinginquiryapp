@@ -20,7 +20,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     super.dispose();
-    locator<NotesBloc>()?.dispose();
+    locator<NotesBloc>().dispose();
   }
 
   // This widget is the root of your application.

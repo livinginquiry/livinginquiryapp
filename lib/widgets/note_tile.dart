@@ -111,10 +111,11 @@ class _NoteTileState extends State<NoteTile> {
   String _buildTitle(WorksheetContent? content) {
     if ((_content!.questions?.length ?? 0) == 0)
       return "--";
-    else if ((_content!.questions!.first.answer?.length ?? 0) == 0)
+    else if ((_content!.questions!.first.answer.length ?? 0) == 0)
       return "--";
     else {
-      var text = _content!.questions!.first.answer!.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
+      var text =
+          _content!.questions!.first.answer.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
       return truncateWithEllipsis(text, 100);
     }
   }
@@ -122,10 +123,10 @@ class _NoteTileState extends State<NoteTile> {
   String _buildSubtitle(WorksheetContent? content) {
     if ((_content!.questions?.length ?? 0) <= 1)
       return "--";
-    else if ((_content!.questions![1].answer?.length ?? 0) <= 1)
+    else if ((_content!.questions![1].answer.length ?? 0) <= 1)
       return "--";
     else {
-      var text = _content!.questions![1].answer!.split("\n").map((String l) => l.trim()).take(2).join("\n");
+      var text = _content!.questions![1].answer.split("\n").map((String l) => l.trim()).take(2).join("\n");
       return truncateWithEllipsis(text, 150);
     }
   }

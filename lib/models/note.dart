@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import 'constants.dart' as constants;
 import 'util.dart' as util;
 
 class Worksheet {
@@ -10,7 +11,7 @@ class Worksheet {
   WorksheetContent content;
   DateTime dateCreated;
   DateTime dateLastEdited;
-  Color? noteColor;
+  Color noteColor;
   bool isArchived;
   bool isComplete;
 
@@ -23,7 +24,7 @@ class Worksheet {
       'content': content == null ? null : jsonEncode(content.toMap()),
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
-      'note_color': noteColor!.value,
+      'note_color': noteColor.value,
       'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
       'is_complete': isComplete ? 1 : 0
     };
@@ -38,7 +39,7 @@ class Worksheet {
       WorksheetContent.fromMap(jsonDecode(json["content"]) as Map<String, dynamic>),
       DateTime.fromMillisecondsSinceEpoch(json["date_created"] * 1000),
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
-      Color(json["note_color"]),
+      Color(json["note_color"] ?? constants.NOTE_COLORS[0].value),
       id: json["id"],
       isComplete: (json['is_complete'] ?? 0) == 1);
 
@@ -64,34 +65,32 @@ class Worksheet {
 enum WorksheetType { openMic, oneBelief, judgeYourNeighbor }
 
 class WorksheetContent {
-  final List<Question>? questions;
-  final WorksheetType? type;
+  final List<Question> questions;
+  final WorksheetType type;
   final String? displayName;
   WorksheetContent({required this.questions, required this.type, required this.displayName});
 
   WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data)
       : this(
-            questions: data['questions'] == null
-                ? null
-                : (data['questions'] as List<dynamic>)
+            questions:
+                ((data['questions'] ?? {throw new BadWorksheetFormat("Questions are required!")}) as List<dynamic>)
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
-            type: util.enumFromString(WorksheetType.values, type, snakeCase: true),
+            type: util.enumFromString(WorksheetType.values, type, snakeCase: true) ?? WorksheetType.openMic,
             displayName: data['display_name']);
 
   WorksheetContent.fromMap(Map<dynamic, dynamic> data)
       : this(
-            questions: data['questions'] == null
-                ? null
-                : (data['questions'] as List<dynamic>)
+            questions:
+                ((data['questions'] ?? {throw new BadWorksheetFormat("Questions are required!")}) as List<dynamic>)
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
-            type: util.enumFromString(WorksheetType.values, data['type'], snakeCase: true),
+            type: util.enumFromString(WorksheetType.values, data['type'], snakeCase: true) ?? WorksheetType.openMic,
             displayName: data['display_name']);
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
-    map['questions'] = questions == null ? null : questions!.map((p) => p.toMap()).toList();
+    map['questions'] = questions.map((p) => p.toMap()).toList();
     map['type'] = util.enumToString(type, snakeCase: true);
     map['display_name'] = displayName;
     return map;
@@ -99,7 +98,7 @@ class WorksheetContent {
 
   String toReadableFormat() {
     String result = "";
-    questions!.asMap().forEach((index, q) {
+    questions.asMap().forEach((index, q) {
       result += (index > 0 ? "\n" : "") + q.toFormattedString(index: index + 1);
     });
 
@@ -114,24 +113,23 @@ class WorksheetContent {
 enum QuestionType { freeform, multiple }
 
 class Question {
-  final QuestionType? type;
-  final String? question;
+  final QuestionType type;
+  final String question;
 
-  final String? prompt;
+  final String prompt;
   final List<String>? values;
 
-  String? answer;
+  String answer;
 
-  Question({required this.question, this.answer, required this.type, this.prompt, this.values});
+  Question({required this.question, required this.answer, required this.type, required this.prompt, this.values});
 
   Question.fromMap(Map<dynamic, dynamic> data)
       : this(
-            question: data['question'],
-            answer: data['answer'],
-            prompt: data['prompt'],
+            question: data['question'] ?? "",
+            answer: data['answer'] ?? "",
+            prompt: data['prompt'] ?? "",
             values: data['values'] == null ? null : List<String>.from(data['values']),
-            type:
-                data['type'] != null ? util.enumFromString(QuestionType.values, data['type']) : QuestionType.freeform);
+            type: data['type'] = util.enumFromString(QuestionType.values, data['type']) ?? QuestionType.freeform);
 
   // Question.fromYamlMap(Map<dynamic, dynamic> data)
   //     : this(
@@ -156,4 +154,9 @@ class Question {
   String toFormattedString({int index = -1}) {
     return "$question\n$answer\n";
   }
+}
+
+class BadWorksheetFormat implements Exception {
+  final String cause;
+  BadWorksheetFormat(this.cause);
 }

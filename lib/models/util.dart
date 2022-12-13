@@ -41,7 +41,7 @@ int epochFromDate(DateTime dt) {
 }
 
 T? enumFromString<T>(Iterable<T> values, String? value, {snakeCase = false}) {
-  return values.firstWhereOrNull((type) => enumToString(type, snakeCase: snakeCase) == value);
+  return value == null ? null : values.firstWhereOrNull((type) => enumToString(type, snakeCase: snakeCase) == value);
 }
 
 String enumToString<T>(T enm, {snakeCase = false}) {
@@ -59,7 +59,7 @@ String toHexString(Color color) {
       "${color.blue.toRadixString(16).padLeft(2, "0")}";
 }
 
-Color? getInitialNoteColor() {
+Color getInitialNoteColor() {
   return constants.NOTE_COLORS[0];
 }
 
