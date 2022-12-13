@@ -119,18 +119,18 @@ ThemeData lightTheme = ThemeData(
         // bottom app bar theme
         ),
     colorScheme: ColorScheme(
-        primary: Color(0xffEDD5B3),
+        primary: Color(0xFF07053B),
         primaryVariant: Color(0x1aF5E0C3),
-        secondary: Color(0xffC9A87C),
+        secondary: Color(0xFF3A3022),
         secondaryVariant: Color(0xaaC9A87C),
         brightness: Brightness.light,
         background: Color(0xffB5BFD3),
         error: Colors.red,
-        onBackground: Color(0xffB5BFD3),
+        onBackground: Color(0xFF1B1E23),
         onError: Colors.red,
         onPrimary: Color(0xffEDD5B3),
         onSecondary: Color(0xffC9A87C),
-        onSurface: Color(0xff457BE0),
+        onSurface: Color(0xFF09111F),
         surface: Color(0xff457BE0)),
     snackBarTheme: SnackBarThemeData(
         // snack bar theme
