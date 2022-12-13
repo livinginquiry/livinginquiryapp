@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return DefaultTabController(
         length: 2,
         child: Builder(builder: (BuildContext context) {
-          final TabController tabController = DefaultTabController.of(context);
+          final TabController tabController = DefaultTabController.of(context)!;
           tabController.addListener(() {
             if (!tabController.indexIsChanging) {
               setState(() {});
@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     onClose: () => print('DIAL CLOSED'),
                     visible: true,
                     curve: Curves.bounceIn,
-                    children: snapshot.data,
+                    children: snapshot.data!,
                     renderOverlay: true,
                     elevation: 8.0,
                   );
@@ -119,7 +119,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         }));
   }
 
-  SpeedDialChild _profileOption({Function onPressed, String label}) {
+  SpeedDialChild _profileOption({Function? onPressed, required String label}) {
     final labelWidget = Container(
       padding: EdgeInsets.symmetric(vertical: 9.0, horizontal: 14.0),
       margin: EdgeInsetsDirectional.zero,
@@ -132,7 +132,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor)),
     );
 
-    return SpeedDialChild(onTap: onPressed, labelWidget: labelWidget, elevation: 10
+    return SpeedDialChild(onTap: onPressed as void Function()?, labelWidget: labelWidget, elevation: 10
         // label: label.toUpperCase(),
         // labelStyle: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor),
         // labelBackgroundColor: Theme.of(context).accentColor,
@@ -144,8 +144,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     List<SpeedDialChild> children = [];
 
     var notesBloc = Provider.of<NotesBloc>(context);
-    (await notesBloc.getWorksheets()).forEach((k, v) {
-      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName));
+    (await notesBloc.getWorksheets())!.forEach((k, v) {
+      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName!));
     });
     return children;
   }
@@ -195,7 +195,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _moreButtonPressed(BuildContext context) async {
     var notesBloc = Provider.of<NotesBloc>(context);
     String result = "";
-    (await notesBloc.exportWorksheets()).forEach((v) {
+    (await notesBloc.exportWorksheets())!.forEach((v) {
       result += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
     });
     Share.share(result);

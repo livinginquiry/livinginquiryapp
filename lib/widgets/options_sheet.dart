@@ -6,13 +6,13 @@ import 'color_slider.dart';
 enum moreOptions { delete, share, copy }
 
 class OptionsSheet extends StatefulWidget {
-  final Color color;
-  final DateTime lastModified;
-  final void Function(Color) callBackColorTapped;
+  final Color? color;
+  final DateTime? lastModified;
+  final void Function(Color)? callBackColorTapped;
 
-  final void Function(moreOptions) callBackOptionTapped;
+  final void Function(moreOptions)? callBackOptionTapped;
 
-  const OptionsSheet({Key key, this.color, this.lastModified, this.callBackColorTapped, this.callBackOptionTapped})
+  const OptionsSheet({Key? key, this.color, this.lastModified, this.callBackColorTapped, this.callBackOptionTapped})
       : super(key: key);
 
   @override
@@ -20,7 +20,7 @@ class OptionsSheet extends StatefulWidget {
 }
 
 class _OptionsSheetState extends State<OptionsSheet> {
-  Color noteColor;
+  Color? noteColor;
 
   @override
   void initState() {
@@ -39,21 +39,21 @@ class _OptionsSheetState extends State<OptionsSheet> {
               title: new Text('Delete permanently'),
               onTap: () {
                 Navigator.of(context).pop();
-                widget.callBackOptionTapped(moreOptions.delete);
+                widget.callBackOptionTapped!(moreOptions.delete);
               }),
           new ListTile(
               leading: new Icon(Icons.content_copy),
               title: new Text('Duplicate'),
               onTap: () {
                 Navigator.of(context).pop();
-                widget.callBackOptionTapped(moreOptions.copy);
+                widget.callBackOptionTapped!(moreOptions.copy);
               }),
           new ListTile(
               leading: new Icon(Icons.share),
               title: new Text('Share'),
               onTap: () {
                 Navigator.of(context).pop();
-                widget.callBackOptionTapped(moreOptions.share);
+                widget.callBackOptionTapped!(moreOptions.share);
               }),
           new Padding(
             padding: EdgeInsets.only(left: 10, right: 10),
@@ -72,7 +72,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
             children: [
               SizedBox(
                 height: 44,
-                child: Center(child: Text(formatDateTime(widget.lastModified))),
+                child: Center(child: Text(formatDateTime(widget.lastModified!))),
               )
             ],
             mainAxisAlignment: MainAxisAlignment.center,
@@ -85,7 +85,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
 
   void _changeColor(Color color) {
     setState(() {
-      widget.callBackColorTapped(color);
+      widget.callBackColorTapped!(color);
     });
   }
 }

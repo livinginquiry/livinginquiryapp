@@ -22,9 +22,9 @@ class DbProvider {
     "is_complete": "INTEGER"
   };
 
-  Database _database;
+  Database? _database;
 
-  Future<Database> get database async {
+  Future<Database?> get database async {
     if (_database != null) return _database;
 
     _database = await initDB();
@@ -79,7 +79,7 @@ class DbProvider {
 
   Future<int> addNote(Worksheet note) async {
     // Get a reference to the database
-    final Database db = await database;
+    final Database db = await (database as FutureOr<Database>);
 
     // Insert the Notes into the correct table.
     return await db.insert(
@@ -90,7 +90,7 @@ class DbProvider {
   }
 
   Future<bool> copyNote(Worksheet note) async {
-    final Database db = await database;
+    final Database db = await (database as FutureOr<Database>);
     try {
       await db.insert("notes", note.toMap(false), conflictAlgorithm: ConflictAlgorithm.replace);
     } catch (e) {
@@ -102,16 +102,16 @@ class DbProvider {
 
   Future<void> archiveNote(Worksheet note) async {
     if (note.id != -1) {
-      final Database db = await database;
+      final Database db = await (database as FutureOr<Database>);
 
-      int idToUpdate = note.id;
+      int? idToUpdate = note.id;
 
       db.update("notes", note.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
     }
   }
 
-  Future<void> deleteNote(int id) async {
-    final Database db = await database;
+  Future<void> deleteNote(int? id) async {
+    final Database db = await (database as FutureOr<Database>);
     try {
       await db.delete("notes", where: "id = ?", whereArgs: [id]);
       return true;
@@ -122,7 +122,7 @@ class DbProvider {
   }
 
   Future<List<Map<String, dynamic>>> selectAllWorksheets() async {
-    final Database db = await database;
+    final Database db = await (database as FutureOr<Database>);
     // query all the notes sorted by last edited
     var data = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
 
@@ -130,7 +130,7 @@ class DbProvider {
   }
 
   Future<List<Worksheet>> getWorksheets() async {
-    final Database db = await database;
+    final Database db = await (database as FutureOr<Database>);
     // query all the notes sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
     List<Worksheet> notes = res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];

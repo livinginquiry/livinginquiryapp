@@ -1,6 +1,7 @@
 import "dart:math";
 
 import 'package:basic_utils/basic_utils.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -39,8 +40,8 @@ int epochFromDate(DateTime dt) {
   return dt.millisecondsSinceEpoch ~/ 1000;
 }
 
-T enumFromString<T>(Iterable<T> values, String value, {snakeCase = false}) {
-  return values.firstWhere((type) => enumToString(type, snakeCase: snakeCase) == value, orElse: () => null);
+T? enumFromString<T>(Iterable<T> values, String? value, {snakeCase = false}) {
+  return values.firstWhereOrNull((type) => enumToString(type, snakeCase: snakeCase) == value);
 }
 
 String enumToString<T>(T enm, {snakeCase = false}) {
@@ -58,7 +59,7 @@ String toHexString(Color color) {
       "${color.blue.toRadixString(16).padLeft(2, "0")}";
 }
 
-Color getInitialNoteColor() {
+Color? getInitialNoteColor() {
   return constants.NOTE_COLORS[0];
 }
 

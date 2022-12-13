@@ -7,7 +7,7 @@ import '../widgets/note_tile.dart';
 
 class NotesPage extends StatefulWidget {
   final bool showDone;
-  const NotesPage({@required this.showDone, Key key}) : super(key: key);
+  const NotesPage({required this.showDone, Key? key}) : super(key: key);
   @override
   _NotesPageState createState() => _NotesPageState();
 }
@@ -37,11 +37,11 @@ class _NotesPageState extends State<NotesPage> with AutomaticKeepAliveClientMixi
                 // Make sure data exists and is actually loaded
                 if (snapshot.hasData) {
                   // If there are no notes (data), display this message.
-                  if (snapshot.data.length == 0) {
+                  if (snapshot.data!.length == 0) {
                     return Center(child: Text('Empty'));
                   }
 
-                  List<Worksheet> worksheets = snapshot.data;
+                  List<Worksheet> worksheets = snapshot.data!;
 
                   return ListView.builder(
                       key: _listKey,

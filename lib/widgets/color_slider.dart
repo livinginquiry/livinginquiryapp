@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/constants.dart' as constants;
 
 class ColorSlider extends StatefulWidget {
-  final void Function(Color) callBackColorTapped;
-  final Color noteColor;
-  ColorSlider({@required this.callBackColorTapped, @required this.noteColor});
+  final void Function(Color?) callBackColorTapped;
+  final Color? noteColor;
+  ColorSlider({required this.callBackColorTapped, required this.noteColor});
   @override
   _ColorSliderState createState() => _ColorSliderState();
 }
@@ -16,8 +16,8 @@ class _ColorSliderState extends State<ColorSlider> {
 
   final _check = Icon(Icons.check);
 
-  Color noteColor;
-  int indexOfCurrentColor;
+  Color? noteColor;
+  int? indexOfCurrentColor;
   @override
   void initState() {
     super.initState();
@@ -58,7 +58,7 @@ class _ColorSliderState extends State<ColorSlider> {
     });
   }
 
-  Widget _checkOrNot(int index) {
+  Widget? _checkOrNot(int index) {
     if (indexOfCurrentColor == index) {
       return _check;
     }

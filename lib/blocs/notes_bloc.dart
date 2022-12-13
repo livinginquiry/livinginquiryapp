@@ -9,7 +9,7 @@ import '../models/note.dart';
 import '../services/db_provider.dart';
 
 class NotesBloc extends ChangeNotifier {
-  DbProvider _db = locator<DbProvider>();
+  DbProvider? _db = locator<DbProvider>();
   // Create a broadcast controller that allows this stream to be listened
   // to multiple times. This is the primary, if not only, type of stream you'll be using.
   final _notesControllerDone = StreamController<List<Worksheet>>.broadcast();
@@ -24,14 +24,14 @@ class NotesBloc extends ChangeNotifier {
   Stream<List<Worksheet>> get notesStarted => _notesControllerStarted.stream;
 
   // Input stream for adding new notes. We'll call this from our pages.
-  final _addNoteController = StreamController<Worksheet>.broadcast();
-  StreamSink<Worksheet> get inAddNote => _addNoteController.sink;
+  final _addNoteController = StreamController<Worksheet?>.broadcast();
+  StreamSink<Worksheet?> get inAddNote => _addNoteController.sink;
 
-  final _saveNoteController = StreamController<Worksheet>.broadcast();
-  StreamSink<Worksheet> get inSaveNote => _saveNoteController.sink;
+  final _saveNoteController = StreamController<Worksheet?>.broadcast();
+  StreamSink<Worksheet?> get inSaveNote => _saveNoteController.sink;
 
-  final _deleteNoteController = StreamController<int>.broadcast();
-  StreamSink<int> get inDeleteNote => _deleteNoteController.sink;
+  final _deleteNoteController = StreamController<int?>.broadcast();
+  StreamSink<int?> get inDeleteNote => _deleteNoteController.sink;
 
   // This bool StreamController will be used to ensure we don't do anything
   // else until a note is actually deleted from the database.
@@ -43,7 +43,7 @@ class NotesBloc extends ChangeNotifier {
   StreamSink<int> get _inAdded => _noteAddedController.sink;
   Stream<int> get added => _noteAddedController.stream;
 
-  Map<String, WorksheetContent> _worksheets;
+  Map<String, WorksheetContent>? _worksheets;
 
   NotesBloc() {
     _loadInquiryTypes();
@@ -54,7 +54,7 @@ class NotesBloc extends ChangeNotifier {
     _deleteNoteController.stream.listen(_handleDeleteNote);
   }
 
-  Future<Map<String, WorksheetContent>> getWorksheets() {
+  Future<Map<String, WorksheetContent>?> getWorksheets() {
     return _loadInquiryTypes();
   }
 
@@ -69,7 +69,7 @@ class NotesBloc extends ChangeNotifier {
     _noteAddedController.close();
   }
 
-  Future<Map<String, WorksheetContent>> _loadInquiryTypes() async {
+  Future<Map<String, WorksheetContent>?> _loadInquiryTypes() async {
     if (_worksheets != null) {
       return _worksheets;
     }
@@ -78,7 +78,7 @@ class NotesBloc extends ChangeNotifier {
 
     print(doc);
 
-    print("my worksheets is ${_worksheets.length}");
+    print("my worksheets is ${_worksheets!.length}");
 
     return _worksheets;
   }
@@ -86,7 +86,7 @@ class NotesBloc extends ChangeNotifier {
   void loadWorksheets() async {
     try {
       // Retrieve all the notes from the database
-      List<Worksheet> notes = await _db.getWorksheets();
+      List<Worksheet> notes = await _db!.getWorksheets();
 
       // Add all of the notes to the stream so we can grab them later from our pages
       _inNotesDone.add(notes.where((item) => item.isComplete).toList());
@@ -96,18 +96,18 @@ class NotesBloc extends ChangeNotifier {
     }
   }
 
-  Future<List<Worksheet>> exportWorksheets() async {
+  Future<List<Worksheet>?> exportWorksheets() async {
     try {
-      return await _db.getWorksheets();
+      return await _db!.getWorksheets();
     } catch (e) {
       print("Couldn't load worksheets for export! $e");
     }
     return null;
   }
 
-  void _handleAddNote(Worksheet note) async {
+  void _handleAddNote(Worksheet? note) async {
     // Create the note in the database
-    int id = await _db.addNote(note);
+    int id = await _db!.addNote(note!);
 
     _inAdded.add(id);
     // Retrieve all the notes again after one is added.
@@ -116,8 +116,8 @@ class NotesBloc extends ChangeNotifier {
     loadWorksheets();
   }
 
-  void _handleDeleteNote(int id) async {
-    await _db.deleteNote(id);
+  void _handleDeleteNote(int? id) async {
+    await _db!.deleteNote(id);
 
     // Set this to true in order to ensure a note is deleted
     // before doing anything else

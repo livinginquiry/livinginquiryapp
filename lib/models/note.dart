@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'util.dart' as util;
 
 class Worksheet {
-  int id;
+  int? id;
   String title;
   WorksheetContent content;
   DateTime dateCreated;
   DateTime dateLastEdited;
-  Color noteColor;
+  Color? noteColor;
   bool isArchived;
   bool isComplete;
 
@@ -23,7 +23,7 @@ class Worksheet {
       'content': content == null ? null : jsonEncode(content.toMap()),
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
-      'note_color': noteColor.value,
+      'note_color': noteColor!.value,
       'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
       'is_complete': isComplete ? 1 : 0
     };
@@ -64,10 +64,10 @@ class Worksheet {
 enum WorksheetType { openMic, oneBelief, judgeYourNeighbor }
 
 class WorksheetContent {
-  final List<Question> questions;
-  final WorksheetType type;
-  final String displayName;
-  WorksheetContent({@required this.questions, @required this.type, @required this.displayName});
+  final List<Question>? questions;
+  final WorksheetType? type;
+  final String? displayName;
+  WorksheetContent({required this.questions, required this.type, required this.displayName});
 
   WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data)
       : this(
@@ -91,7 +91,7 @@ class WorksheetContent {
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
-    map['questions'] = questions == null ? null : questions.map((p) => p.toMap()).toList();
+    map['questions'] = questions == null ? null : questions!.map((p) => p.toMap()).toList();
     map['type'] = util.enumToString(type, snakeCase: true);
     map['display_name'] = displayName;
     return map;
@@ -99,7 +99,7 @@ class WorksheetContent {
 
   String toReadableFormat() {
     String result = "";
-    questions.asMap().forEach((index, q) {
+    questions!.asMap().forEach((index, q) {
       result += (index > 0 ? "\n" : "") + q.toFormattedString(index: index + 1);
     });
 
@@ -114,15 +114,15 @@ class WorksheetContent {
 enum QuestionType { freeform, multiple }
 
 class Question {
-  final QuestionType type;
-  final String question;
+  final QuestionType? type;
+  final String? question;
 
-  final String prompt;
-  final List<String> values;
+  final String? prompt;
+  final List<String>? values;
 
-  String answer;
+  String? answer;
 
-  Question({@required this.question, this.answer, @required this.type, this.prompt, this.values});
+  Question({required this.question, this.answer, required this.type, this.prompt, this.values});
 
   Question.fromMap(Map<dynamic, dynamic> data)
       : this(

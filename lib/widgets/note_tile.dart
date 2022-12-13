@@ -13,10 +13,10 @@ class NoteTile extends StatefulWidget {
 }
 
 class _NoteTileState extends State<NoteTile> {
-  WorksheetContent _content;
-  double _fontSize;
-  Color _tileColor;
-  String _title;
+  WorksheetContent? _content;
+  double? _fontSize;
+  Color? _tileColor;
+  late String _title;
 
   @override
   Widget build(BuildContext context) {
@@ -77,10 +77,10 @@ class _NoteTileState extends State<NoteTile> {
       );
     }
 
-    debugPrint("dacontent ${_content.toMap()}");
-    final text = _content.displayName == null ? _content.type : _content.displayName;
+    debugPrint("dacontent ${_content!.toMap()}");
+    final text = _content!.displayName == null ? _content!.type! : _content!.displayName!;
     tiles.add(AutoSizeText(
-      text,
+      text as String,
       style: TextStyle(fontSize: _fontSize),
       maxLines: 10,
       textScaleFactor: 1,
@@ -91,7 +91,7 @@ class _NoteTileState extends State<NoteTile> {
   }
 
   double _determineFontSizeForContent() {
-    final text = (widget.note.content.questions?.length ?? 0) > 0 ? widget.note.content.questions.first.answer : "";
+    final text = (widget.note.content.questions?.length ?? 0) > 0 ? widget.note.content.questions!.first.answer! : "";
 
     int charCount = text.length + widget.note.title.length;
     double fontSize = 20;
@@ -108,24 +108,24 @@ class _NoteTileState extends State<NoteTile> {
     return fontSize;
   }
 
-  String _buildTitle(WorksheetContent content) {
-    if ((_content.questions?.length ?? 0) == 0)
+  String _buildTitle(WorksheetContent? content) {
+    if ((_content!.questions?.length ?? 0) == 0)
       return "--";
-    else if ((_content.questions.first.answer?.length ?? 0) == 0)
+    else if ((_content!.questions!.first.answer?.length ?? 0) == 0)
       return "--";
     else {
-      var text = _content.questions.first.answer.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
+      var text = _content!.questions!.first.answer!.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
       return truncateWithEllipsis(text, 100);
     }
   }
 
-  String _buildSubtitle(WorksheetContent content) {
-    if ((_content.questions?.length ?? 0) <= 1)
+  String _buildSubtitle(WorksheetContent? content) {
+    if ((_content!.questions?.length ?? 0) <= 1)
       return "--";
-    else if ((_content.questions[1].answer?.length ?? 0) <= 1)
+    else if ((_content!.questions![1].answer?.length ?? 0) <= 1)
       return "--";
     else {
-      var text = _content.questions[1].answer.split("\n").map((String l) => l.trim()).take(2).join("\n");
+      var text = _content!.questions![1].answer!.split("\n").map((String l) => l.trim()).take(2).join("\n");
       return truncateWithEllipsis(text, 150);
     }
   }
