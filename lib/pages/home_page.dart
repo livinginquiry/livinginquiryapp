@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:share/share.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/note.dart';
 import '../models/util.dart';
@@ -169,9 +171,9 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   List<Widget> _appBarActions(BuildContext context) {
     return [
       PopupMenuButton<String>(
-        onSelected: (value) => _moreButtonPressed(),
+        onSelected: (value) => _moreButtonPressed(value),
         itemBuilder: (BuildContext context) {
-          return {'Share all'}.map((String choice) {
+          return {'Share all', 'About'}.map((String choice) {
             return PopupMenuItem<String>(
               value: choice,
               child: Text(choice),
@@ -189,12 +191,60 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     ];
   }
 
-  void _moreButtonPressed() async {
+  Future<void> _moreButtonPressed(String item) async {
+    switch (item) {
+      case "Share all":
+        {
+          _shareWorksheets();
+        }
+        break;
+      case "About":
+        {
+          _showAboutDialog();
+        }
+    }
+    ;
+  }
+
+  void _showAboutDialog() {
+    showAboutDialog(
+      context: context,
+      applicationIcon: ImageIcon(AssetImage("assets/icon.png"), size: 75),
+      applicationName: 'Pocket Inquiry',
+      applicationVersion: '0.0.1',
+      applicationLegalese: '©2022 http://pocketinquiry.com/',
+      children: <Widget>[
+        // Padding(
+        //     padding: EdgeInsets.only(top: 15),
+        //     child: Text('Do The Work of Byron Katie on the go with Pocket Inquiry.')),
+        Padding(
+            padding: EdgeInsets.only(top: 15),
+            child: Center(
+              child: Linkify(
+                onOpen: _onOpen,
+                textScaleFactor: 1,
+                text:
+                    "Do The Work of Byron Katie on the go with Pocket Inquiry.  Visit https://thework.com to learn more about The Work of Byron Katie.",
+              ),
+            ))
+      ],
+    );
+  }
+
+  Future<void> _shareWorksheets() async {
     final List<Worksheet> worksheets = await ref.read(worksheetNotifierProvider.future);
     final result = worksheets.fold("", (acc, v) {
       acc += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
       return acc;
     });
     Share.share(result);
+  }
+
+  Future<void> _onOpen(LinkableElement link) async {
+    if (await canLaunch(link.url)) {
+      await launch(link.url);
+    } else {
+      throw 'Could not launch $link';
+    }
   }
 }
