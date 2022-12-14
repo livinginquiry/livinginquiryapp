@@ -55,9 +55,7 @@ class WorksheetDb {
     }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
       print("upgrading from $oldVersion to $newVersion");
       for (var i = oldVersion - 1; i < newVersion - 1; i++) {
-        print("upgrada");
         await db.execute(migrationScripts[i]);
-        print("post mkraba");
       }
     });
 
