@@ -60,6 +60,10 @@ Color getInitialNoteColor() {
   return constants.NOTE_COLORS[0];
 }
 
+String extractAnswerFirstLine(String answerText) {
+  return answerText.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
+}
+
 String truncateWithEllipsis(String text, int maxLen) {
   if (text.length > maxLen) {
     return text.substring(0, maxLen - 3) + "...";

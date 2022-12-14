@@ -112,9 +112,7 @@ class _NoteTileState extends State<NoteTile> {
     else if (_content!.questions.first.answer.length == 0)
       return "--";
     else {
-      var text =
-          _content!.questions.first.answer.replaceAll("\u2022", "").split("\n").map((String l) => l.trim()).first;
-      return truncateWithEllipsis(text, 100);
+      return truncateWithEllipsis(extractAnswerFirstLine(_content!.questions.first.answer), 100);
     }
   }
 

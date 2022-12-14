@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
+import 'package:recase/recase.dart';
 import 'package:share/share.dart';
 import 'package:validators/validators.dart';
 
@@ -153,7 +155,14 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
   }
 
   Widget _pageTitle() {
-    return Text(_worksheet.id == -1 ? "New Note" : "Edit Note");
+    if (_isNewNote) {
+      return Text(_worksheet.content.type.name.titleCase);
+    } else {
+      final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
+          ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)
+          : _worksheet.content.type.name.titleCase;
+      return Text(heading);
+    }
   }
 
   List<Widget> _buildActions(BuildContext context) {
