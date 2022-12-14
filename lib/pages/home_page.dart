@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:share/share.dart';
 
-import '../blocs/notes_bloc.dart';
 import '../models/note.dart';
 import '../models/util.dart';
+import '../providers/notes_provider.dart';
 import 'note_page.dart';
 import 'notes_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderStateMixin {
+  late final speedDialMenu;
+
   @override
   void initState() {
     super.initState();
+    speedDialMenu = _getProfileMenu();
   }
 
   @override
@@ -36,7 +41,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             appBar: PreferredSize(
                 preferredSize: Size(double.infinity, 60),
                 child: AppBar(
-                  // brightness: Brightness.light,
                   actions: _appBarActions(context),
                   elevation: 0,
                   centerTitle: true,
@@ -94,7 +98,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
             bottomSheet: _bottomBar(),
             floatingActionButton: FutureBuilder(
-              future: _getProfileMenu(),
+              future: speedDialMenu,
               builder: (BuildContext context, AsyncSnapshot<List<SpeedDialChild>> snapshot) {
                 if (snapshot.hasData) {
                   return SpeedDial(
@@ -102,8 +106,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     animatedIconTheme: IconThemeData(size: 22.0),
                     foregroundColor: Theme.of(context).backgroundColor,
                     backgroundColor: Theme.of(context).accentColor,
-                    onOpen: () => print('OPENING DIAL'),
-                    onClose: () => print('DIAL CLOSED'),
                     visible: true,
                     curve: Curves.bounceIn,
                     children: snapshot.data!,
@@ -132,19 +134,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor)),
     );
 
-    return SpeedDialChild(onTap: onPressed as void Function()?, labelWidget: labelWidget, elevation: 10
-        // label: label.toUpperCase(),
-        // labelStyle: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).backgroundColor),
-        // labelBackgroundColor: Theme.of(context).accentColor,
-        // backgroundColor: Theme.of(context).colorScheme.background
-        );
+    return SpeedDialChild(onTap: onPressed as void Function()?, labelWidget: labelWidget, elevation: 10);
   }
 
   Future<List<SpeedDialChild>> _getProfileMenu() async {
     List<SpeedDialChild> children = [];
 
-    var notesBloc = Provider.of<NotesBloc>(context);
-    (await notesBloc.getWorksheets())!.forEach((k, v) {
+    var provider = ref.read(worksheetTypeProvider);
+
+    (await provider.getInquiryTypes())!.forEach((k, v) {
       children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName!));
     });
     return children;
@@ -163,7 +161,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
-    print("nu note");
     // "-1" id indicates the note is not new
     var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialNoteColor());
     Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
@@ -172,7 +169,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   List<Widget> _appBarActions(BuildContext context) {
     return [
       PopupMenuButton<String>(
-        onSelected: (value) => _moreButtonPressed(context),
+        onSelected: (value) => _moreButtonPressed(),
         itemBuilder: (BuildContext context) {
           return {'Share all'}.map((String choice) {
             return PopupMenuItem<String>(
@@ -192,11 +189,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     ];
   }
 
-  void _moreButtonPressed(BuildContext context) async {
-    var notesBloc = Provider.of<NotesBloc>(context);
-    String result = "";
-    (await notesBloc.exportWorksheets())!.forEach((v) {
-      result += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
+  void _moreButtonPressed() async {
+    final List<Worksheet> worksheets = await ref.read(worksheetNotifierProvider.future);
+    final result = worksheets.fold("", (acc, v) {
+      acc += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
+      return acc;
     });
     Share.share(result);
   }

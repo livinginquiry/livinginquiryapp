@@ -8,7 +8,7 @@ enum moreOptions { delete, share, copy }
 class OptionsSheet extends StatefulWidget {
   final Color color;
   final DateTime? lastModified;
-  final void Function(Color) callBackColorTapped;
+  final Future<void> Function(Color) callBackColorTapped;
 
   final void Function(moreOptions)? callBackOptionTapped;
 
@@ -84,10 +84,8 @@ class _OptionsSheetState extends State<OptionsSheet> {
     );
   }
 
-  // TODO: Use BLOC!
-  void _changeColor(Color color) {
-    setState(() {
-      widget.callBackColorTapped(color);
-    });
+  Future<void> _changeColor(Color color) async {
+    widget.callBackColorTapped(color);
+    setState(() {});
   }
 }

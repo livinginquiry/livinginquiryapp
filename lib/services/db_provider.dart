@@ -36,14 +36,11 @@ class DbProvider {
     var dbPath = join(path, 'notes.db');
     // ignore: argument_type_not_assignable
     Database dbConnection = await openDatabase(dbPath, version: 2, onCreate: (Database db, int version) async {
-      print("executing create query from onCreate callback");
       await db.execute(_buildCreateQuery());
     }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
       print("upgrading from $oldVersion to $newVersion");
       for (var i = oldVersion - 1; i < newVersion - 1; i++) {
-        print("upgrada");
         await db.execute(migrationScripts[i]);
-        print("post mkraba");
       }
     });
 
@@ -65,11 +62,6 @@ class DbProvider {
     query += " )";
 
     return query;
-  }
-
-  static Future<String> dbPath() async {
-    String path = await getDatabasesPath();
-    return path;
   }
 
   Future<int> addNote(Worksheet note) async {
@@ -99,13 +91,13 @@ class DbProvider {
     if (note.id != -1) {
       final Database db = await (database as FutureOr<Database>);
 
-      int? idToUpdate = note.id;
+      int idToUpdate = note.id;
 
       db.update("notes", note.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
     }
   }
 
-  Future<bool> deleteNote(int? id) async {
+  Future<bool> deleteNote(int id) async {
     final Database db = await (database as FutureOr<Database>);
     try {
       await db.delete("notes", where: "id = ?", whereArgs: [id]);
@@ -114,14 +106,6 @@ class DbProvider {
       print("Error deleting $id: ${e.toString()}");
       return false;
     }
-  }
-
-  Future<List<Map<String, dynamic>>> selectAllWorksheets() async {
-    final Database db = await (database as FutureOr<Database>);
-    // query all the notes sorted by last edited
-    var data = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
-
-    return data;
   }
 
   Future<List<Worksheet>> getWorksheets() async {

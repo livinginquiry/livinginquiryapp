@@ -6,7 +6,7 @@ import 'constants.dart' as constants;
 import 'util.dart' as util;
 
 class Worksheet {
-  int? id;
+  int id;
   String title;
   WorksheetContent content;
   DateTime dateCreated;
@@ -40,7 +40,7 @@ class Worksheet {
       DateTime.fromMillisecondsSinceEpoch(json["date_created"] * 1000),
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
       Color(json["note_color"] ?? constants.NOTE_COLORS[0].value),
-      id: json["id"],
+      id: json["id"] ?? -1,
       isComplete: (json['is_complete'] ?? 0) == 1);
 
   void archiveThisNote() {
@@ -130,16 +130,6 @@ class Question {
             prompt: data['prompt'] ?? "",
             values: data['values'] == null ? null : List<String>.from(data['values']),
             type: data['type'] = util.enumFromString(QuestionType.values, data['type']) ?? QuestionType.freeform);
-
-  // Question.fromYamlMap(Map<dynamic, dynamic> data)
-  //     : this(
-  //           question: data['question'],
-  //           answer: data['answer'],
-  //           prompt: data['prompt'],
-  //           values: data['values'] == null ? null : List<String>.from(data['values']),
-  //           type: data['type'] != null
-  //               ? util.getEnumFromString(QuestionType.values, data['type'])
-  //               : QuestionType.freeform);
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();

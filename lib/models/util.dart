@@ -1,5 +1,3 @@
-import "dart:math";
-
 import 'package:basic_utils/basic_utils.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
@@ -10,7 +8,6 @@ import 'constants.dart' as constants;
 final fontColor = Color(0xff595959);
 final borderColor = Color(0xffd3d3d3);
 
-final _random = Random();
 String formatDateTime(DateTime dt) {
   var dtInLocal = dt.toLocal();
   var now = DateTime.now().toLocal();
