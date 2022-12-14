@@ -214,9 +214,6 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       applicationVersion: '0.0.1',
       applicationLegalese: '©2022 http://pocketinquiry.com/',
       children: <Widget>[
-        // Padding(
-        //     padding: EdgeInsets.only(top: 15),
-        //     child: Text('Do The Work of Byron Katie on the go with Pocket Inquiry.')),
         Padding(
             padding: EdgeInsets.only(top: 15),
             child: Center(

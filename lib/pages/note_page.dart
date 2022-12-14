@@ -140,7 +140,10 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
               height: 44,
               width: MediaQuery.of(context).size.width,
               child: ColorSlider(
-                callBackColorTapped: _changeColor,
+                callBackColorTapped: (color) {
+                  _fbKey.currentState!.save();
+                  _changeColor(color);
+                },
                 // call callBack from notePage here
                 noteColor: _noteColor, // take color from local variable
               ),
