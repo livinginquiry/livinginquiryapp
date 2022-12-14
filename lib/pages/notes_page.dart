@@ -24,11 +24,12 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final worksheets = ref.watch(worksheetNotifierProvider);
     return worksheets.when(
         loading: () => const CircularProgressIndicator(),
         error: (error, stack) {
-          print("Couldn't load data: ${error}.  \n${stack.toString()}");
+          print("Couldn't load data: $error.  \n${stack.toString()}");
           return Text("Oops, couldn't load worksheets.");
         },
         data: (worksheets) => Container(

@@ -40,10 +40,9 @@ class _NoteTileState extends State<NoteTile> {
             SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
             SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-              Text(formatDateTime(
-                  widget.note.dateLastEdited == null ? widget.note.dateCreated : widget.note.dateLastEdited))
-            ])
+            Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[Text(formatDateTime(widget.note.dateLastEdited))])
           ]),
         ));
 
@@ -108,7 +107,7 @@ class _NoteTileState extends State<NoteTile> {
   }
 
   String _buildTitle(WorksheetContent? content) {
-    if ((_content!.questions.length ?? 0) == 0)
+    if (_content!.questions.length == 0)
       return "--";
     else if (_content!.questions.first.answer.length == 0)
       return "--";

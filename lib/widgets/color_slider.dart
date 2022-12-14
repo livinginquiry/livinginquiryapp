@@ -5,7 +5,7 @@ import '../models/constants.dart' as constants;
 class ColorSlider extends StatefulWidget {
   final void Function(Color) callBackColorTapped;
   final Color noteColor;
-  ColorSlider({required this.callBackColorTapped, required this.noteColor});
+  const ColorSlider({required this.callBackColorTapped, required this.noteColor, Key? key}) : super(key: key);
   @override
   _ColorSliderState createState() => _ColorSliderState();
 }

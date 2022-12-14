@@ -21,7 +21,7 @@ class Worksheet {
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
       'title': utf8.encode(title),
-      'content': content == null ? null : jsonEncode(content.toMap()),
+      'content': jsonEncode(content.toMap()),
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.value,

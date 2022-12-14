@@ -6,7 +6,6 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite/sqlite_api.dart';
 import 'package:yaml/yaml.dart';
 
 import '../models/note.dart';
@@ -174,10 +173,6 @@ class WorksheetTypeRepository {
     }
     var doc = loadYaml(await rootBundle.loadString('assets/question_types.yaml')) as Map;
     _worksheets = Map.unmodifiable(doc.map((k, v) => MapEntry(k.toString(), WorksheetContent.fromYamlMap(k, v))));
-
-    print(doc);
-
-    print("my worksheets is ${_worksheets!.length}");
 
     return _worksheets;
   }

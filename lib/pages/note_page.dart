@@ -12,6 +12,7 @@ import 'package:validators/validators.dart';
 import '../models/note.dart';
 import '../models/util.dart';
 import '../providers/notes_provider.dart';
+import '../widgets/color_slider.dart';
 import '../widgets/options_sheet.dart';
 
 const int MAXIMUM_CHARS = 500;
@@ -133,6 +134,18 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
                   )
                 ]),
           ),
+          new Padding(
+            padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
+            child: SizedBox(
+              height: 44,
+              width: MediaQuery.of(context).size.width,
+              child: ColorSlider(
+                callBackColorTapped: _changeColor,
+                // call callBack from notePage here
+                noteColor: _noteColor, // take color from local variable
+              ),
+            ),
+          )
         ])));
   }
 
@@ -280,8 +293,8 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
 
       if (q.type == QuestionType.multiple) {
         formItem = FormBuilderRadioGroup(
-          name: q.question!,
-          decoration: InputDecoration(labelText: q.prompt == null ? "" : q.prompt),
+          name: q.question,
+          decoration: InputDecoration(labelText: q.prompt),
           initialValue: q.answer,
           validator: null,
           options: q.values!
