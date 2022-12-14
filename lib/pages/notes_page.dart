@@ -41,11 +41,14 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
                   if (filtered.isEmpty) {
                     return const Center(child: Text('Totes no notes'));
                   } else {
-                    return ListView.builder(
+                    return ListView.separated(
                         key: _listKey,
                         itemCount: filtered.length,
                         itemBuilder: (BuildContext context, int index) {
                           return NoteTile(filtered[index]);
+                        },
+                        separatorBuilder: (BuildContext context, int index) {
+                          return SizedBox(height: 2);
                         });
                   }
                 }))));
