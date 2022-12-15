@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -20,107 +21,112 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderStateMixin {
   late final speedDialMenu;
-
+  late final _tabController;
+  late final _tabListener;
   @override
   void initState() {
     super.initState();
     speedDialMenu = _getProfileMenu();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabListener = () {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    };
+    _tabController.addListener(_tabListener);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _tabController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-        length: 2,
-        child: Builder(builder: (BuildContext context) {
-          final TabController tabController = DefaultTabController.of(context)!;
-          tabController.addListener(() {
-            if (!tabController.indexIsChanging) {
-              setState(() {});
-            }
-          });
-          return Scaffold(
-            resizeToAvoidBottomInset: false,
-            appBar: PreferredSize(
-                preferredSize: Size(double.infinity, 60),
-                child: AppBar(
-                  actions: _appBarActions(context),
-                  elevation: 0,
-                  centerTitle: true,
-                  title: Transform(
-                      transform: new Matrix4.translationValues(0.0, 2.0, 0.0),
-                      child: Container(
-                          color: Theme.of(context).backgroundColor,
-                          child: TabBar(
-                            labelPadding: EdgeInsets.only(left: 5, right: 5),
-                            tabs: [
-                              Tab(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                                      color: tabController.index == 0
-                                          ? Theme.of(context).accentColor
-                                          : Theme.of(context).scaffoldBackgroundColor),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text("STARTED"),
-                                  ),
-                                ),
-                              ),
-                              Tab(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                                    color: tabController.index == 1
-                                        ? Theme.of(context).accentColor
-                                        : Theme.of(context).scaffoldBackgroundColor,
-                                  ),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text("DONE"),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ))),
-                  bottom: PreferredSize(
-                      child: Container(
-                        color: Theme.of(context).accentColor,
-                        height: 12.0,
-                      ),
-                      preferredSize: Size.fromHeight(12.0)),
-                )),
-            body: SafeArea(
-              child: _body(),
-              right: true,
-              left: true,
-              top: true,
-              bottom: true,
-            ),
-            bottomSheet: _bottomBar(),
-            floatingActionButton: FutureBuilder(
-              future: speedDialMenu,
-              builder: (BuildContext context, AsyncSnapshot<List<SpeedDialChild>> snapshot) {
-                if (snapshot.hasData) {
-                  return SpeedDial(
-                    animatedIcon: AnimatedIcons.menu_close,
-                    animatedIconTheme: IconThemeData(size: 22.0),
-                    foregroundColor: Theme.of(context).backgroundColor,
-                    backgroundColor: Theme.of(context).accentColor,
-                    visible: true,
-                    curve: Curves.bounceIn,
-                    children: snapshot.data!,
-                    renderOverlay: true,
-                    elevation: 8.0,
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
-          );
-        }));
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 60),
+          child: AppBar(
+            actions: _appBarActions(context),
+            elevation: 0,
+            centerTitle: true,
+            title: Transform(
+                transform: new Matrix4.translationValues(0.0, 2.0, 0.0),
+                child: Container(
+                    color: Theme.of(context).backgroundColor,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelPadding: EdgeInsets.only(left: 5, right: 5),
+                      tabs: [
+                        Tab(
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+                                color: _tabController.index == 0
+                                    ? Theme.of(context).accentColor
+                                    : Theme.of(context).scaffoldBackgroundColor),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text("STARTED"),
+                            ),
+                          ),
+                        ),
+                        Tab(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+                              color: _tabController.index == 1
+                                  ? Theme.of(context).accentColor
+                                  : Theme.of(context).scaffoldBackgroundColor,
+                            ),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text("DONE"),
+                            ),
+                          ),
+                        )
+                      ],
+                    ))),
+            bottom: PreferredSize(
+                child: Container(
+                  color: Theme.of(context).accentColor,
+                  height: 12.0,
+                ),
+                preferredSize: Size.fromHeight(12.0)),
+          )),
+      body: SafeArea(
+        child: _body(_tabController),
+        right: true,
+        left: true,
+        top: true,
+        bottom: true,
+      ),
+      bottomSheet: _bottomBar(),
+      floatingActionButton: FutureBuilder(
+        future: speedDialMenu,
+        builder: (BuildContext context, AsyncSnapshot<List<SpeedDialChild>> snapshot) {
+          if (snapshot.hasData) {
+            return SpeedDial(
+              animatedIcon: AnimatedIcons.menu_close,
+              animatedIconTheme: IconThemeData(size: 22.0),
+              foregroundColor: Theme.of(context).backgroundColor,
+              backgroundColor: Theme.of(context).accentColor,
+              visible: true,
+              curve: Curves.bounceIn,
+              children: snapshot.data!,
+              renderOverlay: true,
+              elevation: 8.0,
+            );
+          } else {
+            return CircularProgressIndicator();
+          }
+        },
+      ),
+    );
   }
 
   SpeedDialChild _profileOption({Function? onPressed, required String label}) {
@@ -145,13 +151,14 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     var provider = ref.read(worksheetTypeProvider);
 
     (await provider.getInquiryTypes())!.forEach((k, v) {
-      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName!));
+      children.add(_profileOption(onPressed: () async => await _newNoteTapped(context, v), label: v.displayName!));
     });
     return children;
   }
 
-  Widget _body() {
+  Widget _body(TabController tabController) {
     return TabBarView(
+        controller: tabController,
         children: <Widget>[Container(child: NotesPage(showDone: false)), Container(child: NotesPage(showDone: true))]);
   }
 
@@ -162,10 +169,18 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
+  Future<void> _newNoteTapped(BuildContext ctx, WorksheetContent content) async {
     // "-1" id indicates the note is not new
     var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialNoteColor());
-    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
+    final result = await Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
+    print("Got result from new note $result");
+    if (result != -1) {
+      final List<Worksheet> worksheets = await ref.read(worksheetNotifierProvider.future);
+      final ws = worksheets.firstWhereOrNull((element) => element.id == result);
+      if (ws != null) {
+        _tabController.index = ws.isComplete ? 1 : 0;
+      }
+    }
   }
 
   List<Widget> _appBarActions(BuildContext context) {

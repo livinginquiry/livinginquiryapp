@@ -274,6 +274,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
     //show saved toast after calling _persistData function.
     _fbKey.currentState!.save();
     await _persistData(context);
+    Navigator.pop(context, _worksheet.id);
     return true;
   }
 
