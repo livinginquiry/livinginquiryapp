@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:livinginquiryapp/models/util.dart';
 
+import '../models/note.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_tile.dart';
 
@@ -12,8 +15,6 @@ class NotesPage extends ConsumerStatefulWidget {
 }
 
 class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveClientMixin<NotesPage> {
-  GlobalKey _listKey = GlobalKey();
-
   @override
   bool get wantKeepAlive => true;
 
@@ -41,15 +42,24 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
                   if (filtered.isEmpty) {
                     return const Center(child: Text('Totes no notes'));
                   } else {
-                    return ListView.separated(
-                        key: _listKey,
-                        itemCount: filtered.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return NoteTile(filtered[index]);
-                        },
-                        separatorBuilder: (BuildContext context, int index) {
-                          return SizedBox(height: 2);
-                        });
+                    return GroupedListView<Worksheet, WorksheetBucketHolder>(
+                      elements: filtered,
+                      itemBuilder: (context, elem) => NoteTile(elem),
+                      groupBy: (ws) => getDateBucket(ws.dateLastEdited),
+                      groupSeparatorBuilder: (WorksheetBucketHolder holder) => Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          holder.name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      itemComparator: (ws1, ws2) => -ws1.dateLastEdited.compareTo(ws2.dateLastEdited),
+                      useStickyGroupSeparators: true,
+                      floatingHeader: false,
+                      separator: SizedBox(height: 2),
+                      order: GroupedListOrder.ASC,
+                    );
                   }
                 }))));
   }

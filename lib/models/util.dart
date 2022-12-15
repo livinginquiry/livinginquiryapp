@@ -1,4 +1,4 @@
-import 'package:basic_utils/basic_utils.dart';
+import 'package:basic_utils/basic_utils.dart' as basic_utils;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -43,7 +43,7 @@ T? enumFromString<T>(Iterable<T> values, String? value, {snakeCase = false}) {
 
 String enumToString<T>(T enm, {snakeCase = false}) {
   final enumName = enm.toString().split('.').last;
-  return snakeCase ? StringUtils.camelCaseToLowerUnderscore(enumName) : enumName;
+  return snakeCase ? basic_utils.StringUtils.camelCaseToLowerUnderscore(enumName) : enumName;
 }
 
 List<String> enumToStringValues<T>(Iterable<T> values, {snakeCase = false}) {
@@ -69,5 +69,60 @@ String truncateWithEllipsis(String text, int maxLen) {
     return text.substring(0, maxLen - 3) + "...";
   } else {
     return text;
+  }
+}
+
+enum WorksheetBucket { Today, DayOfWeek, LastWeek, Month, Year }
+
+class WorksheetBucketHolder implements Comparable<WorksheetBucketHolder> {
+  WorksheetBucketHolder(this.bucket, this.name);
+  final WorksheetBucket bucket;
+  final String name;
+
+  @override
+  int compareTo(WorksheetBucketHolder other) {
+    return bucket.index.compareTo(other.bucket.index);
+  }
+
+  bool operator ==(o) => o is WorksheetBucketHolder && o.name == name && o.bucket == bucket;
+
+  @override
+  int get hashCode => Object.hash(bucket, name);
+}
+
+final DayOfWeekFormat = (date) => DateFormat('EEEE').format(date);
+final MonthFormat = (date) => DateFormat('MMMM').format(date);
+final toBucketHolder = (bucket, date) => WorksheetBucketHolder(bucket, worksheetBucketToString(bucket, date));
+
+WorksheetBucketHolder getDateBucket(DateTime time) {
+  final now = DateUtils.dateOnly(DateTime.now());
+  final then = DateUtils.dateOnly(time);
+  final diff = now.difference(then);
+  if (DateUtils.isSameDay(now, then)) {
+    return toBucketHolder(WorksheetBucket.Today, then);
+  } else if (diff.inDays < 7 && then.weekday < now.weekday) {
+    return toBucketHolder(WorksheetBucket.DayOfWeek, then);
+  } else if (now.subtract(Duration(days: now.weekday + 7)).compareTo(then) >= 0) {
+    return toBucketHolder(WorksheetBucket.LastWeek, then);
+  } else if (diff.inDays < 365) {
+    return toBucketHolder(WorksheetBucket.Month, then);
+  } else {
+    return toBucketHolder(WorksheetBucket.Year, then);
+  }
+}
+
+// TODO: externalize strings
+String worksheetBucketToString(WorksheetBucket bucket, DateTime dt) {
+  switch (bucket) {
+    case WorksheetBucket.Today:
+      return "Today";
+    case WorksheetBucket.DayOfWeek:
+      return DayOfWeekFormat(dt);
+    case WorksheetBucket.LastWeek:
+      return "Last Week";
+    case WorksheetBucket.Month:
+      return MonthFormat(dt);
+    case WorksheetBucket.Year:
+      return dt.year.toString();
   }
 }
