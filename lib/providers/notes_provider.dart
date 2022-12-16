@@ -129,6 +129,7 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
   Future<int> addWorksheet(Worksheet worksheet) async {
     final repo = WorksheetRepository(ref);
     state = const AsyncLoading();
+    worksheet.dateLastEdited = DateTime.now();
     final res = await repo.addWorksheet(worksheet);
     if (res > 0) {
       state = await AsyncValue.guard(repo.getWorksheets);

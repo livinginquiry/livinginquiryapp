@@ -9,6 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:recase/recase.dart';
 import 'package:share/share.dart';
+import 'package:tuple/tuple.dart';
 import 'package:validators/validators.dart';
 
 import '../models/note.dart';
@@ -34,8 +35,8 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
-  final List<FocusNode> focusNodes = [];
-  final List<TextEditingController> _textControllers = [];
+  final List<Tuple2<TextEditingController, FocusNode>> _fieldControllers = [];
+  late final KeyboardActionsConfig _keyboardActionsConfig;
 
   @override
   void initState() {
@@ -49,9 +50,9 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
     }
 
     _worksheet.content.questions.forEach((val) {
-      focusNodes.add(FocusNode());
-      _textControllers.add(TextEditingController());
+      _fieldControllers.add(Tuple2(TextEditingController(text: val.answer), FocusNode()));
     });
+    _keyboardActionsConfig = _buildConfig();
   }
 
   @override
@@ -75,12 +76,12 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
     }
   }
 
-  KeyboardActionsConfig _buildConfig(BuildContext context) {
+  KeyboardActionsConfig _buildConfig() {
     return KeyboardActionsConfig(
         keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
         keyboardBarColor: Colors.grey[200],
         nextFocus: true,
-        actions: this.focusNodes.map((node) => KeyboardActionsItem(focusNode: node)).toList());
+        actions: this._fieldControllers.map((tup) => KeyboardActionsItem(focusNode: tup.item2)).toList());
   }
 
   @override
@@ -98,7 +99,11 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
           backgroundColor: Colors.white,
           title: _pageTitle(),
         ),
-        body: KeyboardActions(config: _buildConfig(context), child: _body(context)),
+        body: KeyboardActions(
+          config: _keyboardActionsConfig,
+          child: _body(context),
+          keepFocusOnTappingNode: true,
+        ),
         resizeToAvoidBottomInset: true,
       ),
       onWillPop: () => _readyToPop(context),
@@ -110,7 +115,8 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
         color: _noteColor,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
-            child: Column(children: <Widget>[
+            child: SingleChildScrollView(
+                child: Column(children: <Widget>[
           FormBuilder(
               key: _fbKey,
               autovalidateMode: AutovalidateMode.always,
@@ -151,7 +157,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
               ),
             ),
           )
-        ])));
+        ]))));
   }
 
   Widget _pageTitle() {
@@ -319,29 +325,29 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
         );
       } else {
         final idx = index;
-        _textControllers[idx].text = q.answer;
         final item = FormBuilderTextField(
-            maxLines: null,
-            readOnly: false,
-            textCapitalization: TextCapitalization.sentences,
-            inputFormatters: <TextInputFormatter>[_BulletFormatter()],
-            controller: _textControllers[idx],
-            autofocus: index == 0 && _isNewNote,
-            focusNode: focusNodes[idx],
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            name: q.question,
-            decoration: InputDecoration(labelText: q.prompt),
-            validator: FormBuilderValidators.max(MAXIMUM_CHARS),
-            onSaved: (val) {
-              q.answer = val ?? "";
-            },
-            onSubmitted: (val) {
-              focusNodes[idx].unfocus();
-              if (focusNodes.length - 1 > idx) {
-                FocusScope.of(context).requestFocus(focusNodes[idx + 1]);
-              }
-            });
+          maxLines: null,
+          readOnly: false,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: <TextInputFormatter>[_BulletFormatter()],
+          controller: _fieldControllers[idx].item1,
+          autofocus: index == 0 && _isNewNote, // focus on first field when it's a new note
+          focusNode: _fieldControllers[idx].item2,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          name: q.question,
+          decoration: InputDecoration(labelText: q.prompt),
+          validator: FormBuilderValidators.max(MAXIMUM_CHARS),
+          onSaved: (val) {
+            q.answer = val ?? "";
+          },
+          onSubmitted: (val) {
+            _fieldControllers[idx].item2.unfocus();
+            if (_fieldControllers.length - 1 > idx) {
+              FocusScope.of(context).requestFocus(_fieldControllers[idx + 1].item2);
+            }
+          },
+        );
         formItem = item;
       }
       items.add(formItem);
