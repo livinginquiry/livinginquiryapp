@@ -102,7 +102,7 @@ WorksheetBucketHolder getDateBucket(DateTime time) {
     return toBucketHolder(WorksheetBucket.Today, then);
   } else if (diff.inDays < 7 && then.weekday < now.weekday) {
     return toBucketHolder(WorksheetBucket.DayOfWeek, then);
-  } else if (now.subtract(Duration(days: now.weekday + 7)).compareTo(then) >= 0) {
+  } else if (now.subtract(Duration(days: now.weekday + 7)).compareTo(then) <= 0) {
     return toBucketHolder(WorksheetBucket.LastWeek, then);
   } else if (diff.inDays < 365) {
     return toBucketHolder(WorksheetBucket.Month, then);
