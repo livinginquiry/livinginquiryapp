@@ -3,18 +3,18 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/models/util.dart';
 
-import '../models/note.dart';
-import '../providers/notes_provider.dart';
-import '../widgets/note_tile.dart';
+import '../models/worksheet.dart';
+import '../providers/worksheets_provider.dart';
+import '../widgets/worksheet_tile.dart';
 
-class NotesPage extends ConsumerStatefulWidget {
+class WorksheetsPage extends ConsumerStatefulWidget {
   final bool showDone;
-  const NotesPage({required this.showDone, Key? key}) : super(key: key);
+  const WorksheetsPage({required this.showDone, Key? key}) : super(key: key);
   @override
-  _NotesPageState createState() => _NotesPageState();
+  _WorksheetPageState createState() => _WorksheetPageState();
 }
 
-class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveClientMixin<NotesPage> {
+class _WorksheetPageState extends ConsumerState<WorksheetsPage> with AutomaticKeepAliveClientMixin<WorksheetsPage> {
   @override
   bool get wantKeepAlive => true;
 
@@ -44,7 +44,7 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
                   } else {
                     return GroupedListView<Worksheet, WorksheetBucketHolder>(
                       elements: filtered,
-                      itemBuilder: (context, elem) => NoteTile(elem),
+                      itemBuilder: (context, elem) => WorksheetTile(elem),
                       groupBy: (ws) => getDateBucket(ws.dateCreated),
                       groupSeparatorBuilder: (WorksheetBucketHolder holder) => Padding(
                         padding: const EdgeInsets.all(8.0),

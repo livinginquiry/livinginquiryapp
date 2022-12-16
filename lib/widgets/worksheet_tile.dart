@@ -1,18 +1,18 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
-import '../models/note.dart';
 import '../models/util.dart';
-import '../pages/note_page.dart';
+import '../models/worksheet.dart';
+import '../pages/worksheet_page.dart';
 
-class NoteTile extends StatefulWidget {
-  final Worksheet note;
-  NoteTile(this.note);
+class WorksheetTile extends StatefulWidget {
+  final Worksheet worksheet;
+  WorksheetTile(this.worksheet);
   @override
-  _NoteTileState createState() => _NoteTileState();
+  _WorksheetTileState createState() => _WorksheetTileState();
 }
 
-class _NoteTileState extends State<NoteTile> {
+class _WorksheetTileState extends State<WorksheetTile> {
   WorksheetContent? _content;
   double? _fontSize;
   Color? _tileColor;
@@ -20,10 +20,10 @@ class _NoteTileState extends State<NoteTile> {
 
   @override
   Widget build(BuildContext context) {
-    _content = widget.note.content;
+    _content = widget.worksheet.content;
     _fontSize = _determineFontSizeForContent();
-    _tileColor = widget.note.noteColor;
-    _title = widget.note.title;
+    _tileColor = widget.worksheet.noteColor;
+    _title = widget.worksheet.title;
 
     final subtitle = _buildSubtitle(_content);
     final title = _buildTitle(_content);
@@ -42,29 +42,29 @@ class _NoteTileState extends State<NoteTile> {
             SizedBox(height: 8),
             Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[Text(formatDateTime(widget.note.dateLastEdited))])
+                children: <Widget>[Text(formatDateTime(widget.worksheet.dateLastEdited))])
           ]),
         ));
 
     return GestureDetector(
-      onTap: () => _noteTapped(context),
+      onTap: () => _worksheetTapped(context),
       child: card,
     );
   }
 
-  void _noteTapped(BuildContext ctx) {
-    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(widget.note)));
+  void _worksheetTapped(BuildContext ctx) {
+    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(widget.worksheet)));
   }
 
   Widget constructChild() {
     List<Widget> tiles = [];
 
-    if (widget.note.title.length != 0) {
+    if (widget.worksheet.title.length != 0) {
       tiles.add(
         AutoSizeText(
           _title,
           style: TextStyle(fontSize: _fontSize, fontWeight: FontWeight.bold),
-          maxLines: widget.note.title.length == 0 ? 1 : 3,
+          maxLines: widget.worksheet.title.length == 0 ? 1 : 3,
           textScaleFactor: 1.5,
         ),
       );
@@ -89,9 +89,9 @@ class _NoteTileState extends State<NoteTile> {
   }
 
   double _determineFontSizeForContent() {
-    final text = widget.note.content.questions.length > 0 ? widget.note.content.questions.first.answer : "";
+    final text = widget.worksheet.content.questions.length > 0 ? widget.worksheet.content.questions.first.answer : "";
 
-    int charCount = text.length + widget.note.title.length;
+    int charCount = text.length + widget.worksheet.title.length;
     double fontSize = 20;
     if (charCount > 110) {
       fontSize = 12;

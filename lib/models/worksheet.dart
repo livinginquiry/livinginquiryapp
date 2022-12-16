@@ -43,7 +43,7 @@ class Worksheet {
       WorksheetContent.fromMap(jsonDecode(json["content"]) as Map<String, dynamic>),
       DateTime.fromMillisecondsSinceEpoch(json["date_created"] * 1000),
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
-      Color(json["note_color"] ?? constants.NOTE_COLORS[0].value),
+      Color(json["note_color"] ?? constants.WORKSHEET_COLORS[0].value),
       id: json["id"] ?? -1,
       isComplete: (json['is_complete'] ?? 0) == 1);
 

@@ -56,8 +56,8 @@ String toHexString(Color color) {
       "${color.blue.toRadixString(16).padLeft(2, "0")}";
 }
 
-Color getInitialNoteColor() {
-  return constants.NOTE_COLORS[0];
+Color getInitialWorksheetColor() {
+  return constants.WORKSHEET_COLORS[0];
 }
 
 String extractAnswerFirstLine(String answerText) {

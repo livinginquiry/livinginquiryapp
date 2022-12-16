@@ -12,26 +12,26 @@ import 'package:share/share.dart';
 import 'package:tuple/tuple.dart';
 import 'package:validators/validators.dart';
 
-import '../models/note.dart';
 import '../models/util.dart';
-import '../providers/notes_provider.dart';
+import '../models/worksheet.dart';
+import '../providers/worksheets_provider.dart';
 import '../widgets/color_slider.dart';
 import '../widgets/options_sheet.dart';
 
 const int MAXIMUM_CHARS = 500;
 
-class NotePage extends ConsumerStatefulWidget {
+class WorksheetPage extends ConsumerStatefulWidget {
   final Worksheet worksheet;
 
-  const NotePage(this.worksheet, {Key? key}) : super(key: key);
+  const WorksheetPage(this.worksheet, {Key? key}) : super(key: key);
   @override
-  _NotePageState createState() => _NotePageState();
+  _WorksheetPageState createState() => _WorksheetPageState();
 }
 
-class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver {
+class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindingObserver {
   late Worksheet _worksheet;
-  var _noteColor;
-  bool _isNewNote = false;
+  var _worksheetColor;
+  bool _isNew = false;
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
@@ -43,10 +43,10 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
-    _noteColor = _worksheet.noteColor;
+    _worksheetColor = _worksheet.noteColor;
 
     if (widget.worksheet.id == -1) {
-      _isNewNote = true;
+      _isNew = true;
     }
 
     _worksheet.content.questions.forEach((val) {
@@ -112,7 +112,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
 
   Widget _body(BuildContext ctx) {
     return Container(
-        color: _noteColor,
+        color: _worksheetColor,
         padding: EdgeInsets.only(left: 16, right: 16, top: 12),
         child: SafeArea(
             child: SingleChildScrollView(
@@ -152,8 +152,8 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
                   _fbKey.currentState!.save();
                   _changeColor(color);
                 },
-                // call callBack from notePage here
-                noteColor: _noteColor, // take color from local variable
+                // call callBack from worksheetPage here
+                worksheetColor: _worksheetColor, // take color from local variable
               ),
             ),
           )
@@ -161,7 +161,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
   }
 
   Widget _pageTitle() {
-    if (_isNewNote) {
+    if (_isNew) {
       return Text(_worksheet.content.type.name.titleCase);
     } else {
       final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
@@ -193,7 +193,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
         context: context,
         builder: (BuildContext ctx) {
           return OptionsSheet(
-            color: _noteColor,
+            color: _worksheetColor,
             callBackColorTapped: (color) => _changeColor(color),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
             lastModified: _worksheet.dateLastEdited,
@@ -214,7 +214,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
       case moreOptions.delete:
         {
           if (_worksheet.id != -1) {
-            _deleteNote(_globalKey.currentContext!);
+            _deleteWorksheet(_globalKey.currentContext!);
           } else {
             _exitWithoutSaving(context);
           }
@@ -236,14 +236,14 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
     }
   }
 
-  void _deleteNote(BuildContext context) async {
+  void _deleteWorksheet(BuildContext context) async {
     if (_worksheet.id != -1) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text("Confirm ?"),
-              content: Text("This note will be deleted permanently"),
+              content: Text("This worksheet will be deleted permanently"),
               actions: <Widget>[
                 TextButton(
                     onPressed: () async {
@@ -262,7 +262,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
   // TODO: Use BLOC
   Future<void> _changeColor(Color newColorSelected) async {
     setState(() {
-      _noteColor = newColorSelected;
+      _worksheetColor = newColorSelected;
       _worksheet.noteColor = newColorSelected;
     });
     _persistColorChange();
@@ -271,7 +271,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
   Future<void> _persistColorChange() async {
     if (_worksheet.id != -1) {
       final db = ref.read(worksheetNotifierProvider.notifier);
-      _worksheet.noteColor = _noteColor;
+      _worksheet.noteColor = _worksheetColor;
       db.addWorksheet(_worksheet);
     }
   }
@@ -331,7 +331,7 @@ class _NotePageState extends ConsumerState<NotePage> with WidgetsBindingObserver
           textCapitalization: TextCapitalization.sentences,
           inputFormatters: <TextInputFormatter>[_BulletFormatter()],
           controller: _fieldControllers[idx].item1,
-          autofocus: index == 0 && _isNewNote, // focus on first field when it's a new note
+          autofocus: index == 0 && _isNew, // focus on first field when it's a new worksheet
           focusNode: _fieldControllers[idx].item2,
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,

@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:yaml/yaml.dart';
 
-import '../models/note.dart';
+import '../models/worksheet.dart';
 
 final worksheetDb = Provider<WorksheetDb>((ref) => WorksheetDb());
 final worksheetDbProvider = FutureProvider.autoDispose<Database>((ref) async {
@@ -91,22 +91,22 @@ class WorksheetRepository {
   WorksheetRepository(this.ref);
   final Ref ref;
 
-  Future<int> addWorksheet(Worksheet note) async {
+  Future<int> addWorksheet(Worksheet worksheet) async {
     final db = await ref.read(worksheetDbProvider.future);
     return db.insert(
       'notes',
-      note.id == -1 ? note.toMap(false) : note.toMap(true),
+      worksheet.id == -1 ? worksheet.toMap(false) : worksheet.toMap(true),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<void> archiveWorksheet(Worksheet note) async {
-    if (note.id != -1) {
+  Future<void> archiveWorksheet(Worksheet worksheet) async {
+    if (worksheet.id != -1) {
       final db = await ref.read(worksheetDbProvider.future);
 
-      int? idToUpdate = note.id;
+      int? idToUpdate = worksheet.id;
 
-      db.update("notes", note.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
+      db.update("notes", worksheet.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
     } else {
       print("Ignoring unsaved note");
     }
@@ -119,11 +119,9 @@ class WorksheetRepository {
 
   Future<List<Worksheet>> getWorksheets() async {
     final db = await ref.read(worksheetDbProvider.future);
-    // query all the notes sorted by last edited
+    // query all the worksheets sorted by last edited
     var res = await db.query("notes", orderBy: "date_last_edited desc", where: "is_archived = ?", whereArgs: [0]);
-    List<Worksheet> notes = res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];
-
-    return notes;
+    return res.isNotEmpty ? res.map((note) => Worksheet.fromJson(note)).toList() : [];
   }
 }
 

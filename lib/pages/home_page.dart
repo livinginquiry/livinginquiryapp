@@ -5,11 +5,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../models/note.dart';
 import '../models/util.dart';
-import '../providers/notes_provider.dart';
-import 'note_page.dart';
-import 'notes_page.dart';
+import '../models/worksheet.dart';
+import '../providers/worksheets_provider.dart';
+import 'worksheet_page.dart';
+import 'worksheets_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -152,15 +152,16 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     var provider = ref.read(worksheetTypeProvider);
 
     (await provider.getInquiryTypes())!.forEach((k, v) {
-      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName!));
+      children.add(_profileOption(onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
     });
     return children;
   }
 
   Widget _body(TabController tabController) {
-    return TabBarView(
-        controller: tabController,
-        children: <Widget>[Container(child: NotesPage(showDone: false)), Container(child: NotesPage(showDone: true))]);
+    return TabBarView(controller: tabController, children: <Widget>[
+      Container(child: WorksheetsPage(showDone: false)),
+      Container(child: WorksheetsPage(showDone: true))
+    ]);
   }
 
   Widget _bottomBar() {
@@ -170,10 +171,10 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
-    // "-1" id indicates the note is not new
-    var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialNoteColor());
-    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
+  void _newWorksheetTapped(BuildContext ctx, WorksheetContent content) {
+    // "-1" id indicates the worksheet is not new
+    var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor());
+    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
   }
 
   List<Widget> _appBarActions(BuildContext context) {

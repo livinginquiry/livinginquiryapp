@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const NOTE_COLORS = [
+const WORKSHEET_COLORS = [
   Color(0xffeef0f1), // grey
   Color(0xffffdbdb), // red
   Color(0xffffe5db), // orange

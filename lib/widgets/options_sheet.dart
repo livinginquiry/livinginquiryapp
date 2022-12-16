@@ -21,12 +21,12 @@ class OptionsSheet extends StatefulWidget {
 }
 
 class _OptionsSheetState extends State<OptionsSheet> {
-  late Color noteColor;
+  late Color worksheetColor;
 
   @override
   void initState() {
     super.initState();
-    noteColor = widget.color;
+    worksheetColor = widget.color;
   }
 
   @override
@@ -63,8 +63,8 @@ class _OptionsSheetState extends State<OptionsSheet> {
               width: MediaQuery.of(context).size.width,
               child: ColorSlider(
                 callBackColorTapped: _changeColor,
-                // call callBack from notePage here
-                noteColor: noteColor, // take color from local variable
+                // call callBack from worksheetPage here
+                worksheetColor: worksheetColor, // take color from local variable
               ),
             ),
           ),
