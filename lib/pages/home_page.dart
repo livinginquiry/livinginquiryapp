@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -44,6 +43,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<WorksheetEvent>(worksheetEventProvider, (_, event) => _handleWorksheetEvent(event));
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
@@ -151,7 +152,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     var provider = ref.read(worksheetTypeProvider);
 
     (await provider.getInquiryTypes())!.forEach((k, v) {
-      children.add(_profileOption(onPressed: () async => await _newNoteTapped(context, v), label: v.displayName!));
+      children.add(_profileOption(onPressed: () => _newNoteTapped(context, v), label: v.displayName!));
     });
     return children;
   }
@@ -169,18 +170,10 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  Future<void> _newNoteTapped(BuildContext ctx, WorksheetContent content) async {
+  void _newNoteTapped(BuildContext ctx, WorksheetContent content) {
     // "-1" id indicates the note is not new
     var emptyNote = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialNoteColor());
-    final result = await Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
-    print("Got result from new note $result");
-    if (result != -1) {
-      final List<Worksheet> worksheets = await ref.read(worksheetNotifierProvider.future);
-      final ws = worksheets.firstWhereOrNull((element) => element.id == result);
-      if (ws != null) {
-        _tabController.index = ws.isComplete ? 1 : 0;
-      }
-    }
+    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => NotePage(emptyNote)));
   }
 
   List<Widget> _appBarActions(BuildContext context) {
@@ -257,6 +250,19 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       await launch(link.url);
     } else {
       throw 'Could not launch $link';
+    }
+  }
+
+  void _handleWorksheetEvent(WorksheetEvent event) {
+    switch (event.type) {
+      case WorksheetEventType.Added:
+      case WorksheetEventType.Modified:
+        {
+          final ws = event.worksheet!;
+          _tabController.index = ws.isComplete ? 1 : 0;
+        }
+        break;
+      default:
     }
   }
 }

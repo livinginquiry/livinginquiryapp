@@ -18,6 +18,10 @@ class Worksheet {
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
       {this.id = -1, this.isArchived = false, this.isComplete = false});
 
+  Worksheet.clone(Worksheet other)
+      : this(other.title, other.content, other.dateCreated, other.dateLastEdited, other.noteColor,
+            id: other.id, isArchived: other.isArchived, isComplete: other.isComplete);
+
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
       'title': utf8.encode(title),

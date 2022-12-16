@@ -20,6 +20,13 @@ final worksheetNotifierProvider =
 
 final worksheetTypeProvider = Provider<WorksheetTypeRepository>((ref) => WorksheetTypeRepository());
 
+class WorksheetEventNotifier extends StateNotifier<WorksheetEvent> {
+  WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default, List.empty()));
+}
+
+final worksheetEventProvider =
+    StateNotifierProvider<WorksheetEventNotifier, WorksheetEvent>((ref) => WorksheetEventNotifier());
+
 class WorksheetDb {
   final databaseName = "notes.db";
   final tableName = "notes";
@@ -120,10 +127,28 @@ class WorksheetRepository {
   }
 }
 
+enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, Deleted }
+
+class WorksheetEvent {
+  WorksheetEvent(this.type, this.worksheets, {this.worksheet}) : this.timestamp = DateTime.now();
+  final DateTime timestamp;
+  final WorksheetEventType type;
+  final Worksheet? worksheet;
+  final List<Worksheet> worksheets;
+
+  bool operator ==(o) => o is WorksheetEvent && o.type == type && o.timestamp == timestamp;
+  @override
+  int get hashCode => Object.hash(type, timestamp);
+}
+
 class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
   @override
   FutureOr<List<Worksheet>> build() {
-    return WorksheetRepository(ref).getWorksheets();
+    return WorksheetRepository(ref).getWorksheets().then((worksheets) {
+      final provider = ref.read(worksheetEventProvider.notifier);
+      provider.state = WorksheetEvent(WorksheetEventType.Reloaded, worksheets);
+      return worksheets;
+    });
   }
 
   Future<int> addWorksheet(Worksheet worksheet) async {
@@ -132,7 +157,16 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     worksheet.dateLastEdited = DateTime.now();
     final res = await repo.addWorksheet(worksheet);
     if (res > 0) {
-      state = await AsyncValue.guard(repo.getWorksheets);
+      final worksheets = await AsyncValue.guard(repo.getWorksheets);
+      final cloned = Worksheet.clone(worksheet);
+      cloned.id = res;
+      worksheets.whenData((data) {
+        final provider = ref.read(worksheetEventProvider.notifier);
+        provider.state = WorksheetEvent(
+            worksheet.id == -1 ? WorksheetEventType.Added : WorksheetEventType.Modified, data,
+            worksheet: cloned);
+      });
+      state = worksheets;
     } else {
       throw new WorksheetDbException("Worksheet couldn't be added!");
     }
@@ -144,7 +178,12 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     state = const AsyncLoading();
     final res = await repo.deleteWorksheet(id);
     if (res == 1) {
-      state = await AsyncValue.guard(repo.getWorksheets);
+      final worksheets = await AsyncValue.guard(repo.getWorksheets);
+      worksheets.whenData((data) {
+        final provider = ref.read(worksheetEventProvider.notifier);
+        provider.state = WorksheetEvent(WorksheetEventType.Deleted, data);
+      });
+      state = worksheets;
     } else {
       throw new WorksheetDbException("Worksheet couldn't be deleted!");
     }
@@ -154,7 +193,12 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     final repo = WorksheetRepository(ref);
     state = const AsyncLoading();
     await repo.archiveWorksheet(worksheet);
-    state = await AsyncValue.guard(repo.getWorksheets);
+    final worksheets = await AsyncValue.guard(repo.getWorksheets);
+    worksheets.whenData((data) {
+      final provider = ref.read(worksheetEventProvider.notifier);
+      provider.state = WorksheetEvent(WorksheetEventType.Archived, data, worksheet: worksheet);
+    });
+    state = worksheets;
   }
 }
 
