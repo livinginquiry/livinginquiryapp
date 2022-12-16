@@ -45,7 +45,7 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
                     return GroupedListView<Worksheet, WorksheetBucketHolder>(
                       elements: filtered,
                       itemBuilder: (context, elem) => NoteTile(elem),
-                      groupBy: (ws) => getDateBucket(ws.dateLastEdited),
+                      groupBy: (ws) => getDateBucket(ws.dateCreated),
                       groupSeparatorBuilder: (WorksheetBucketHolder holder) => Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
@@ -54,7 +54,7 @@ class _NotesPageState extends ConsumerState<NotesPage> with AutomaticKeepAliveCl
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      itemComparator: (ws1, ws2) => -ws1.dateLastEdited.compareTo(ws2.dateLastEdited),
+                      itemComparator: (ws1, ws2) => -ws1.dateCreated.compareTo(ws2.dateCreated),
                       useStickyGroupSeparators: true,
                       floatingHeader: false,
                       separator: SizedBox(height: 2),
