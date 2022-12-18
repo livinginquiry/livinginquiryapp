@@ -350,7 +350,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       items.add(Text(
         q.question,
         maxLines: null,
-        style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+        style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
       ));
 
       var formItem;
@@ -370,7 +370,9 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         );
       } else {
         final idx = index;
+        final TextStyle currentStyle = Theme.of(context).textTheme.subtitle1!;
         final item = FormBuilderTextField(
+          style: currentStyle.copyWith(fontSize: (currentStyle.fontSize ?? 16) + 2),
           maxLines: null,
           readOnly: false,
           textCapitalization: TextCapitalization.sentences,
