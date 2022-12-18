@@ -123,24 +123,27 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               initialValue: {},
               child:
                   Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet))),
-          Center(
-            child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  Text("Mark as done"),
-                  Switch(
-                    value: this._worksheet.isComplete,
-                    onChanged: (value) {
-                      setState(() {
-                        this._worksheet.isComplete = value;
-                        _fbKey.currentState!.save();
-                      });
-                    },
-                    activeTrackColor: Colors.lightGreenAccent,
-                    activeColor: Colors.green,
-                  )
-                ]),
+          Column(
+            children: [
+              Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Text("Mark as done"),
+                    Switch(
+                      value: this._worksheet.isComplete,
+                      onChanged: (value) {
+                        setState(() {
+                          this._worksheet.isComplete = value;
+                          _fbKey.currentState!.save();
+                        });
+                      },
+                      activeTrackColor: Colors.lightGreenAccent,
+                      activeColor: Colors.green,
+                    )
+                  ]),
+              _buildChildren(ctx)
+            ],
           ),
           new Padding(
             padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -160,13 +163,52 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         ]))));
   }
 
+  Widget _buildChildren(BuildContext context) {
+    if (_worksheet.content.children?.isNotEmpty ?? false) {
+      final provider = ref.read(worksheetTypeProvider);
+      final childrenTypes = _worksheet.content.children!;
+      final contentTypes = provider
+          .getCachedInquiryTypes()!
+          .entries
+          .map((e) => e.value)
+          .where((element) => childrenTypes.contains(element.type));
+      final label = Text("Continue The Work:");
+      final buttons = contentTypes.map((e) => _createNewWorksheetButton(context, e)).toList();
+      return Row(children: [label, Expanded(child: SizedBox.shrink()), ...buttons]);
+    } else {
+      return SizedBox.shrink();
+    }
+  }
+
+  Widget _createNewWorksheetButton(BuildContext context, WorksheetContent content) {
+    return TextButton(
+      onPressed: () => _createChildWorksheet(context, content),
+      child: Text(content.displayName ?? content.type.name.titleCase),
+      style: TextButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Colors.transparent),
+          ),
+          backgroundColor: Colors.blueGrey,
+          foregroundColor: Colors.white),
+    );
+  }
+
+  Future<void> _createChildWorksheet(BuildContext ctx, WorksheetContent content) async {
+    _fbKey.currentState!.save();
+    await _persistData(ctx);
+    var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(),
+        parentId: _worksheet.id);
+    Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
+  }
+
   Widget _pageTitle() {
     if (_isNew) {
       return Text(_worksheet.content.type.name.titleCase);
     } else {
       final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
           ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)
-          : _worksheet.content.type.name.titleCase;
+          : _worksheet.content.displayName ?? _worksheet.content.type.name.titleCase;
       return Text(heading);
     }
   }
@@ -247,9 +289,12 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               actions: <Widget>[
                 TextButton(
                     onPressed: () async {
-                      Navigator.of(context).pop();
                       final db = ref.read(worksheetNotifierProvider.notifier);
-                      db.deleteWorksheet(_worksheet.id);
+                      db.deleteWorksheet(_worksheet.id).then(
+                          (value) => Navigator.of(context)
+                            ..pop()
+                            ..pop(),
+                          onError: (error, stackTrace) => print("Couldn't delete note: $error, $stackTrace"));
                     },
                     child: Text("Yes")),
                 TextButton(onPressed: () => {Navigator.of(context).pop()}, child: Text("No"))

@@ -20,7 +20,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderStateMixin {
   late final speedDialMenu;
-  late final _tabController;
+  late final TabController _tabController;
   late final _tabListener;
   @override
   void initState() {
@@ -150,10 +150,11 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     List<SpeedDialChild> children = [];
 
     var provider = ref.read(worksheetTypeProvider);
-
-    (await provider.getInquiryTypes())!.forEach((k, v) {
-      children.add(_profileOption(onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
-    });
+    await provider.getInquiryTypes().then(
+        (value) => value?.forEach((k, v) {
+              children.add(_profileOption(onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
+            }),
+        onError: (err) => print("Caught error while loading inquiry types! $err"));
     return children;
   }
 

@@ -1,35 +1,22 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../models/util.dart';
 import '../models/worksheet.dart';
-import '../pages/worksheet_page.dart';
 
-class WorksheetTile extends StatefulWidget {
+class WorksheetTile extends StatelessWidget {
   final Worksheet worksheet;
-  WorksheetTile(this.worksheet);
-  @override
-  _WorksheetTileState createState() => _WorksheetTileState();
-}
-
-class _WorksheetTileState extends State<WorksheetTile> {
-  WorksheetContent? _content;
-  double? _fontSize;
-  Color? _tileColor;
-  late String _title;
+  final int numChildren;
+  final void Function(Worksheet, bool) tileTapped;
+  const WorksheetTile(this.worksheet, this.numChildren, this.tileTapped, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    _content = widget.worksheet.content;
-    _fontSize = _determineFontSizeForContent();
-    _tileColor = widget.worksheet.noteColor;
-    _title = widget.worksheet.title;
-
-    final subtitle = _buildSubtitle(_content);
-    final title = _buildTitle(_content);
+    final tileColor = worksheet.noteColor;
+    final subtitle = _buildSubtitle();
+    final title = _buildTitle();
 
     var card = Container(
-        color: _tileColor,
+        color: tileColor,
         child: ListTile(
           dense: false,
           title: Text(
@@ -40,89 +27,63 @@ class _WorksheetTileState extends State<WorksheetTile> {
             SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
             SizedBox(height: 8),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[Text(formatDateTime(widget.worksheet.dateLastEdited))])
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+              Text(formatDateTime(worksheet.dateCreated)),
+            ])
           ]),
+          trailing: numChildren <= 0 ? null : Transform.translate(offset: Offset(8, -10), child: _getIcon()),
         ));
 
     return GestureDetector(
-      onTap: () => _worksheetTapped(context),
+      onTap: () => tileTapped(worksheet, numChildren > 0),
       child: card,
     );
   }
 
-  void _worksheetTapped(BuildContext ctx) {
-    Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(widget.worksheet)));
-  }
-
-  Widget constructChild() {
-    List<Widget> tiles = [];
-
-    if (widget.worksheet.title.length != 0) {
-      tiles.add(
-        AutoSizeText(
-          _title,
-          style: TextStyle(fontSize: _fontSize, fontWeight: FontWeight.bold),
-          maxLines: widget.worksheet.title.length == 0 ? 1 : 3,
-          textScaleFactor: 1.5,
-        ),
-      );
-      tiles.add(
-        Divider(
-          color: Colors.transparent,
-          height: 6,
-        ),
-      );
+  Widget? _getIcon() {
+    switch (numChildren) {
+      case 0:
+        return null;
+      case 1:
+        return Icon(Icons.filter_1);
+      case 2:
+        return Icon(Icons.filter_2);
+      case 3:
+        return Icon(Icons.filter_3);
+      case 4:
+        return Icon(Icons.filter_4);
+      case 5:
+        return Icon(Icons.filter_5);
+      case 6:
+        return Icon(Icons.filter_6);
+      case 7:
+        return Icon(Icons.filter_7);
+      case 8:
+        return Icon(Icons.filter_8);
+      case 9:
+        return Icon(Icons.filter_9);
+      default:
+        return Icon(Icons.filter_9_plus);
     }
-
-    final text = _content!.displayName == null ? _content!.type : _content!.displayName!;
-    tiles.add(AutoSizeText(
-      text as String,
-      style: TextStyle(fontSize: _fontSize),
-      maxLines: 10,
-      textScaleFactor: 1,
-    ));
-
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: tiles);
   }
 
-  double _determineFontSizeForContent() {
-    final text = widget.worksheet.content.questions.length > 0 ? widget.worksheet.content.questions.first.answer : "";
-
-    int charCount = text.length + widget.worksheet.title.length;
-    double fontSize = 20;
-    if (charCount > 110) {
-      fontSize = 12;
-    } else if (charCount > 80) {
-      fontSize = 14;
-    } else if (charCount > 50) {
-      fontSize = 16;
-    } else if (charCount > 20) {
-      fontSize = 18;
-    }
-
-    return fontSize;
-  }
-
-  String _buildTitle(WorksheetContent? content) {
-    if (_content!.questions.length == 0)
+  String _buildTitle() {
+    if (worksheet.content.questions.length == 0)
       return "--";
-    else if (_content!.questions.first.answer.length == 0)
+    else if (worksheet.content.questions.first.answer.length == 0)
       return "--";
     else {
-      return truncateWithEllipsis(extractAnswerFirstLine(_content!.questions.first.answer), 100);
+      return truncateWithEllipsis(extractAnswerFirstLine(worksheet.content.questions.first.answer), 100);
     }
   }
 
-  String _buildSubtitle(WorksheetContent? content) {
-    if (_content!.questions.length <= 1)
+  String _buildSubtitle() {
+    if (worksheet.content.questions.length <= 1)
       return "--";
-    else if (_content!.questions[1].answer.length <= 1)
+    else if (worksheet.content.questions[1].answer.length <= 1)
       return "--";
     else {
-      var text = _content!.questions[1].answer.split("\n").map((String l) => l.trim()).take(2).join("\n");
+      var text = worksheet.content.questions[1].answer.split("\n").map((String l) => l.trim()).take(2).join("\n");
       return truncateWithEllipsis(text, 150);
     }
   }

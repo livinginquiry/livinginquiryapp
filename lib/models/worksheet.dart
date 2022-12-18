@@ -14,13 +14,14 @@ class Worksheet {
   Color noteColor;
   bool isArchived;
   bool isComplete;
+  int parentId;
 
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
-      {this.id = -1, this.isArchived = false, this.isComplete = false});
+      {this.id = -1, this.isArchived = false, this.isComplete = false, this.parentId = -1});
 
   Worksheet.clone(Worksheet other)
       : this(other.title, other.content, other.dateCreated, other.dateLastEdited, other.noteColor,
-            id: other.id, isArchived: other.isArchived, isComplete: other.isComplete);
+            id: other.id, isArchived: other.isArchived, isComplete: other.isComplete, parentId: other.parentId);
 
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
@@ -30,7 +31,8 @@ class Worksheet {
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.value,
       'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
-      'is_complete': isComplete ? 1 : 0
+      'is_complete': isComplete ? 1 : 0,
+      'parent_id': this.parentId
     };
     if (forUpdate) {
       data["id"] = this.id;
@@ -45,7 +47,8 @@ class Worksheet {
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
       Color(json["note_color"] ?? constants.WORKSHEET_COLORS[0].value),
       id: json["id"] ?? -1,
-      isComplete: (json['is_complete'] ?? 0) == 1);
+      isComplete: (json['is_complete'] ?? 0) == 1,
+      parentId: json["parent_id"] ?? -1);
 
   void archiveThisNote() {
     isArchived = true;
@@ -61,18 +64,21 @@ class Worksheet {
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.toString(),
       'is_archived': isArchived,
-      'is_complete': isComplete
+      'is_complete': isComplete,
+      'parent_id': parentId
     }.toString();
   }
 }
 
+//TODO: make this dynamic(?)
 enum WorksheetType { openMic, oneBelief, judgeYourNeighbor }
 
 class WorksheetContent {
   final List<Question> questions;
   final WorksheetType type;
   final String? displayName;
-  WorksheetContent({required this.questions, required this.type, required this.displayName});
+  final List<WorksheetType>? children;
+  WorksheetContent({required this.questions, required this.type, required this.displayName, this.children});
 
   WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data)
       : this(
@@ -81,7 +87,10 @@ class WorksheetContent {
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
             type: util.enumFromString(WorksheetType.values, type, snakeCase: true) ?? WorksheetType.openMic,
-            displayName: data['display_name']);
+            displayName: data['display_name'],
+            children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
+                .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
+                .toList());
 
   WorksheetContent.fromMap(Map<dynamic, dynamic> data)
       : this(
@@ -90,13 +99,17 @@ class WorksheetContent {
                     .map((p) => Question.fromMap(Map<String, dynamic>.from(p as Map<dynamic, dynamic>)))
                     .toList(),
             type: util.enumFromString(WorksheetType.values, data['type'], snakeCase: true) ?? WorksheetType.openMic,
-            displayName: data['display_name']);
+            displayName: data['display_name'],
+            children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
+                .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
+                .toList());
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
     map['questions'] = questions.map((p) => p.toMap()).toList();
     map['type'] = util.enumToString(type, snakeCase: true);
     map['display_name'] = displayName;
+    map['children'] = children?.map((t) => util.enumToString(t, snakeCase: true)).toList() ?? List.empty();
     return map;
   }
 

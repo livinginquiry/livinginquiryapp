@@ -63,3 +63,4 @@ judge_your_neighbor:
     - question: Notes
       type: freeform
       prompt: ~
+  children: [one_belief]
