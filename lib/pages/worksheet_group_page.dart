@@ -124,7 +124,7 @@ class _WorksheetGroupPageState extends ConsumerState<WorksheetGroupPage>
         break;
       case WorksheetEventType.Deleted:
         {
-          if (event.worksheetId == _parentWorksheet) {
+          if (event.worksheetId == _parentWorksheet.id) {
             Navigator.of(context).pop();
           } else {
             ref.invalidate(childWorksheetsProvider(_parentWorksheet.id));

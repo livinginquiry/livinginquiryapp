@@ -148,6 +148,11 @@ class WorksheetRepository {
         await db.query("notes", where: "parent_id = ? or id = ?", whereArgs: [id, id], orderBy: "date_created desc");
     return res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).toList() : [];
   }
+
+  Future<int> updateChildren(int id) async {
+    final db = await ref.read(worksheetDbProvider.future);
+    return db.update("notes", {"parent_id": -1}, where: "parent_id = ?", whereArgs: [id]);
+  }
 }
 
 enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, Deleted }
@@ -215,21 +220,16 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     final res = await repo.deleteWorksheet(id);
 
     if (res == 1) {
+      await repo.updateChildren(id);
       final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
       asyncWorksheets.whenData((worksheets) async {
-        final orphaned = worksheets.where((ws) => ws.parentId == id);
-        await Future.forEach(orphaned, (element) {
-          ws.parentId = -1;
-          repo.addWorksheet(ws);
-        });
         final provider = ref.read(worksheetEventProvider.notifier);
         provider.state = WorksheetEvent(WorksheetEventType.Deleted, worksheets, worksheetId: id);
-        if (orphaned.isEmpty) {
-          state = asyncWorksheets;
-        }
       });
+      state = asyncWorksheets;
     } else {
-      throw new WorksheetDbException("Worksheet couldn't be deleted!");
+      final exception = new WorksheetDbException("Worksheet $id couldn't be deleted!");
+      state = AsyncError(exception, StackTrace.current);
     }
   }
 
