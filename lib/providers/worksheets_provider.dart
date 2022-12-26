@@ -1,8 +1,11 @@
 // import 'dart:async';
 
 import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
@@ -21,6 +24,7 @@ final worksheetNotifierProvider =
 
 final worksheetTypeProvider = Provider<WorksheetTypeRepository>((ref) => WorksheetTypeRepository());
 final worksheetRepoProvider = Provider<WorksheetRepository>((ref) => WorksheetRepository(ref));
+final stopWordsProvider = Provider<StopWordsRepository>((ref) => StopWordsRepository());
 
 class WorksheetEventNotifier extends StateNotifier<WorksheetEvent> {
   WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default, List.empty()));
@@ -40,7 +44,8 @@ class WorksheetDb {
   static const migrationScripts = [
     'alter table notes add column is_complete integer default 0;',
     "alter table notes add column parent_id integer default -1;",
-    "create index idx_notes_parent_id on notes (parent_id);"
+    "create index idx_notes_parent_id on notes (parent_id);",
+    "alter table notes add column tags text;"
   ];
 
   final fieldMap = {
@@ -52,7 +57,8 @@ class WorksheetDb {
     "note_color": "INTEGER",
     "is_archived": "INTEGER",
     "is_complete": "INTEGER",
-    "parent_id": "INTEGER DEFAULT -1"
+    "parent_id": "INTEGER DEFAULT -1",
+    "tags": "TEXT"
   };
 
   Database? _database;
@@ -68,7 +74,7 @@ class WorksheetDb {
     var path = await getDatabasesPath();
     var dbPath = join(path, 'notes.db');
     // ignore: argument_type_not_assignable
-    Database dbConnection = await openDatabase(dbPath, version: 4, onCreate: (Database db, int version) async {
+    Database dbConnection = await openDatabase(dbPath, version: 5, onCreate: (Database db, int version) async {
       print("executing create query from onCreate callback");
       await db.execute(_buildCreateQuery());
     }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
@@ -104,6 +110,7 @@ class WorksheetRepository {
   final Ref ref;
 
   Future<int> addWorksheet(Worksheet worksheet) async {
+    debugPrint("will szve dibbz ${worksheet.toMap(true)}", wrapWidth: 1024);
     final db = await ref.read(worksheetDbProvider.future);
     return db.insert(
       'notes',
@@ -249,6 +256,14 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
   List<Worksheet>? getCachedChildren(int id) {
     return state.value?.where((e) => e.parentId == id).toList(growable: false);
   }
+
+  Set<String> getCachedTags() {
+    if (state.value?.isNotEmpty ?? false) {
+      return extractGlobalTags(state.value!);
+    } else {
+      return <String>{};
+    }
+  }
 }
 
 class WorksheetDbException implements Exception {
@@ -263,7 +278,7 @@ class WorksheetTypeRepository {
     if (_worksheets != null) {
       return _worksheets;
     }
-    var doc = loadYaml(await rootBundle.loadString('assets/question_types.yaml')) as Map;
+    final doc = loadYaml(await rootBundle.loadString('assets/question_types.yaml')) as Map;
     _worksheets = Map.unmodifiable(doc.map((k, v) => MapEntry(k.toString(), WorksheetContent.fromYamlMap(k, v))));
 
     return _worksheets;
@@ -272,4 +287,29 @@ class WorksheetTypeRepository {
   Map<String, WorksheetContent>? getCachedInquiryTypes() {
     return _worksheets;
   }
+}
+
+class StopWordsRepository {
+  Set<String>? _stopWords;
+
+  Future<Set<String>> getStopWords() async {
+    if (_stopWords != null) {
+      return _stopWords!;
+    }
+    final String raw = await rootBundle.loadString('assets/stop_words.txt');
+    print("got raw stopwords of len ${raw.length}");
+    LineSplitter ls = new LineSplitter();
+    _stopWords = ls.convert(raw).map((s) => s.trim()).toSet();
+    print("found ${_stopWords!.length} stopwords");
+    return _stopWords!;
+  }
+}
+
+Set<String> extractGlobalTags(List<Worksheet> worksheets) {
+  return worksheets.fold(HashSet<String>(), (set, ws) {
+    if (ws.tags?.isNotEmpty ?? false) {
+      set.addAll(ws.tags!);
+    }
+    return set;
+  });
 }

@@ -15,13 +15,18 @@ class Worksheet {
   bool isArchived;
   bool isComplete;
   int parentId;
+  List<String>? tags;
 
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
-      {this.id = -1, this.isArchived = false, this.isComplete = false, this.parentId = -1});
+      {this.id = -1, this.isArchived = false, this.isComplete = false, this.parentId = -1, this.tags});
 
   Worksheet.clone(Worksheet other)
       : this(other.title, other.content, other.dateCreated, other.dateLastEdited, other.noteColor,
-            id: other.id, isArchived: other.isArchived, isComplete: other.isComplete, parentId: other.parentId);
+            id: other.id,
+            isArchived: other.isArchived,
+            isComplete: other.isComplete,
+            parentId: other.parentId,
+            tags: other.tags);
 
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
@@ -32,7 +37,8 @@ class Worksheet {
       'note_color': noteColor.value,
       'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
       'is_complete': isComplete ? 1 : 0,
-      'parent_id': this.parentId
+      'parent_id': this.parentId,
+      'tags': this.tags?.isNotEmpty ?? false ? this.tags!.join("|") : null
     };
     if (forUpdate) {
       data["id"] = this.id;
@@ -48,7 +54,8 @@ class Worksheet {
       Color(json["note_color"] ?? constants.WORKSHEET_COLORS[0].value),
       id: json["id"] ?? -1,
       isComplete: (json['is_complete'] ?? 0) == 1,
-      parentId: json["parent_id"] ?? -1);
+      parentId: json["parent_id"] ?? -1,
+      tags: json["tags"]?.split("|"));
 
   void archiveThisNote() {
     isArchived = true;
@@ -65,7 +72,8 @@ class Worksheet {
       'note_color': noteColor.toString(),
       'is_archived': isArchived,
       'is_complete': isComplete,
-      'parent_id': parentId
+      'parent_id': parentId,
+      'tags': tags
     }.toString();
   }
 }
@@ -166,4 +174,10 @@ class Question {
 class BadWorksheetFormat implements Exception {
   final String cause;
   BadWorksheetFormat(this.cause);
+}
+
+class WorksheetsPayload {
+  final List<Worksheet> worksheets;
+  final Set<String> globalTags;
+  WorksheetsPayload(this.worksheets, this.globalTags);
 }

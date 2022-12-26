@@ -15,6 +15,7 @@ import 'package:validators/validators.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
+import '../widgets/chip_tags.dart';
 import '../widgets/color_slider.dart';
 import '../widgets/options_sheet.dart';
 
@@ -38,13 +39,17 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   final List<Tuple2<TextEditingController, FocusNode>> _fieldControllers = [];
   late final KeyboardActionsConfig _keyboardActionsConfig;
 
+  late List<String> _tagList;
+  Set<String> _suggestions = <String>{};
+
+  late Future<Set<String>> _stopWords;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
     _worksheetColor = _worksheet.noteColor;
-
+    _tagList = _worksheet.tags ?? [];
     if (widget.worksheet.id == -1) {
       _isNew = true;
     }
@@ -53,6 +58,8 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       _fieldControllers.add(Tuple2(TextEditingController(text: val.answer), FocusNode()));
     });
     _keyboardActionsConfig = _buildConfig();
+
+    _stopWords = _getStopWords();
   }
 
   @override
@@ -86,6 +93,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
+    _suggestions = ref.read(worksheetNotifierProvider.notifier).getCachedTags();
     return WillPopScope(
       child: Scaffold(
         key: _globalKey,
@@ -142,7 +150,8 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                       activeColor: Colors.green,
                     )
                   ]),
-              _buildChildren(ctx)
+              _buildTags(ctx),
+              _buildChildButtons(ctx)
             ],
           ),
           new Padding(
@@ -163,7 +172,36 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         ]))));
   }
 
-  Widget _buildChildren(BuildContext context) {
+  Widget _buildTags(BuildContext context) {
+    return FutureBuilder(
+        future: _stopWords,
+        builder: (BuildContext context, AsyncSnapshot<Set<String>> snapshot) {
+          if (snapshot.hasData) {
+            return Padding(
+              padding: const EdgeInsets.all(3.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ChipTags(
+                    tags: _tagList,
+                    createTagOnSubmit: true,
+                    onChanged: () => setState(() {
+                      print("ma tagz is now $_tagList");
+                      _worksheet.tags = _tagList;
+                    }),
+                    suggestions: _suggestions,
+                    stopWords: snapshot.data,
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return CircularProgressIndicator();
+          }
+        });
+  }
+
+  Widget _buildChildButtons(BuildContext context) {
     if (_worksheet.content.children?.isNotEmpty ?? false) {
       final provider = ref.read(worksheetTypeProvider);
       final childrenTypes = _worksheet.content.children!;
@@ -402,6 +440,11 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     });
 
     return items;
+  }
+
+  Future<Set<String>> _getStopWords() async {
+    var provider = ref.read(stopWordsProvider);
+    return provider.getStopWords();
   }
 }
 

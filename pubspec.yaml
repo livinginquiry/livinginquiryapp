@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/question_types.yaml
     - assets/icon.png
+    - assets/stop_words.txt
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
