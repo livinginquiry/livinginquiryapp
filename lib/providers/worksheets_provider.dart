@@ -364,13 +364,15 @@ final splitPattern = new RegExp(r"[,\s]");
 List<Worksheet> applyFilter(WorksheetFilter filter, List<Worksheet> worksheets, Set<String> stopWords) {
   final base =
       worksheets.where((w) => (filter.includeArchived || !w.isArchived) && (filter.includeDone || !w.isComplete));
+
   if (filter.query == null) {
     return base.toList();
-  } else if (filter.query!.isEmpty) {
-    return <Worksheet>[];
   } else {
     final searchTerms =
         filter.query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w)).toSet();
+    if (searchTerms.isEmpty) {
+      return <Worksheet>[];
+    }
     List<Worksheet> matched = [];
     base
         .map((w) => Tuple2(
