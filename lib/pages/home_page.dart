@@ -261,6 +261,9 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
           _tabController.index = ws.isComplete ? 1 : 0;
         }
         break;
+      case WorksheetEventType.Searching:
+        _tabController.index = 0;
+        break;
       default:
     }
   }

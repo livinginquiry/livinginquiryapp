@@ -229,7 +229,7 @@ class WorksheetRepository {
   }
 }
 
-enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, Deleted }
+enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, Deleted, Searching }
 
 class WorksheetEvent {
   WorksheetEvent(this.type, this.worksheets, {this.worksheet, this.worksheetId}) : this.timestamp = DateTime.now();
@@ -272,19 +272,16 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
     WorksheetPayload? oldValue = state.value;
     state = const AsyncLoading();
     final repo = ref.watch(worksheetRepoProvider);
-    final wasCached = repo.hasCache();
     final results = await repo.getWorksheets();
     final stopWords = await ref.watch(stopWordsProvider).getStopWords();
     final filteredResults = applyFilter(filter, results, stopWords);
-    WorksheetEvent event;
-    if (!wasCached ||
-        ((oldValue?.worksheets.map((ws) => ws.id).toSet() ?? <int>{}) != filteredResults.map((ws) => ws.id).toSet())) {
-      final provider = ref.read(worksheetEventProvider.notifier);
-      event = WorksheetEvent(WorksheetEventType.Reloaded, filteredResults);
-      provider.state = event;
-    } else {
-      event = oldValue?.event ?? WorksheetEvent(WorksheetEventType.Default, filteredResults);
-    }
+    final isSearching = filter.query != null;
+
+    final provider = ref.read(worksheetEventProvider.notifier);
+    WorksheetEvent event =
+        WorksheetEvent(isSearching ? WorksheetEventType.Searching : WorksheetEventType.Reloaded, filteredResults);
+    provider.state = event;
+
     return WorksheetPayload(filteredResults, event);
   }
 
