@@ -15,7 +15,7 @@ class Worksheet {
   bool isArchived;
   bool isComplete;
   int parentId;
-  List<String>? tags;
+  Set<String>? tags;
 
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
       {this.id = -1, this.isArchived = false, this.isComplete = false, this.parentId = -1, this.tags});
@@ -38,7 +38,7 @@ class Worksheet {
       'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
       'is_complete': isComplete ? 1 : 0,
       'parent_id': this.parentId,
-      'tags': this.tags?.isNotEmpty ?? false ? this.tags!.join("|") : null
+      'tags': (this.tags?.isNotEmpty ?? false) ? this.tags!.join("|") : null
     };
     if (forUpdate) {
       data["id"] = this.id;
@@ -55,7 +55,7 @@ class Worksheet {
       id: json["id"] ?? -1,
       isComplete: (json['is_complete'] ?? 0) == 1,
       parentId: json["parent_id"] ?? -1,
-      tags: json["tags"]?.split("|"));
+      tags: json["tags"]?.split("|").toSet());
 
   void archiveThisNote() {
     isArchived = true;
@@ -174,10 +174,4 @@ class Question {
 class BadWorksheetFormat implements Exception {
   final String cause;
   BadWorksheetFormat(this.cause);
-}
-
-class WorksheetsPayload {
-  final List<Worksheet> worksheets;
-  final Set<String> globalTags;
-  WorksheetsPayload(this.worksheets, this.globalTags);
 }

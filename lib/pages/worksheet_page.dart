@@ -39,7 +39,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   final List<Tuple2<TextEditingController, FocusNode>> _fieldControllers = [];
   late final KeyboardActionsConfig _keyboardActionsConfig;
 
-  late List<String> _tagList;
+  late Set<String> _tagList;
   Set<String> _suggestions = <String>{};
 
   late Future<Set<String>> _stopWords;
@@ -49,7 +49,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
     _worksheetColor = _worksheet.noteColor;
-    _tagList = _worksheet.tags ?? [];
+    _tagList = _worksheet.tags ?? <String>{};
     if (widget.worksheet.id == -1) {
       _isNew = true;
     }
@@ -186,7 +186,6 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                     tags: _tagList,
                     createTagOnSubmit: true,
                     onChanged: () => setState(() {
-                      print("ma tagz is now $_tagList");
                       _worksheet.tags = _tagList;
                     }),
                     suggestions: _suggestions,

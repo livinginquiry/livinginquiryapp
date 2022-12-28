@@ -10,33 +10,10 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:tuple/tuple.dart';
 import 'package:yaml/yaml.dart';
 
 import '../models/worksheet.dart';
-
-final worksheetDb = Provider<WorksheetDb>((ref) => WorksheetDb());
-final worksheetDbProvider = FutureProvider.autoDispose<Database>((ref) async {
-  return ref.watch(worksheetDb).database;
-});
-
-final worksheetNotifierProvider =
-    AsyncNotifierProvider.autoDispose<WorksheetNotifier, List<Worksheet>>(WorksheetNotifier.new);
-
-final worksheetTypeProvider = Provider<WorksheetTypeRepository>((ref) => WorksheetTypeRepository());
-final worksheetRepoProvider = Provider<WorksheetRepository>((ref) => WorksheetRepository(ref));
-final stopWordsProvider = Provider<StopWordsRepository>((ref) => StopWordsRepository());
-
-class WorksheetEventNotifier extends StateNotifier<WorksheetEvent> {
-  WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default, List.empty()));
-}
-
-final worksheetEventProvider =
-    StateNotifierProvider<WorksheetEventNotifier, WorksheetEvent>((ref) => WorksheetEventNotifier());
-
-final childWorksheetsProvider = FutureProvider.autoDispose.family<List<Worksheet>, int>((ref, id) async {
-  final repo = ref.watch(worksheetRepoProvider);
-  return repo.getChildWorksheets(id);
-});
 
 class WorksheetDb {
   final databaseName = "notes.db";
@@ -94,7 +71,6 @@ class WorksheetDb {
     query += tableName;
     query += "(";
     fieldMap.forEach((column, field) {
-      print("$column : $field");
       query += "$column $field,";
     });
 
@@ -105,18 +81,72 @@ class WorksheetDb {
   }
 }
 
+final worksheetDb = Provider<WorksheetDb>((ref) => WorksheetDb());
+final worksheetDbProvider = FutureProvider.autoDispose<Database>((ref) async {
+  return ref.watch(worksheetDb).database;
+});
+
+final worksheetNotifierProvider =
+    AsyncNotifierProvider.autoDispose<WorksheetNotifier, WorksheetPayload>(WorksheetNotifier.new);
+
+final worksheetTypeProvider = Provider<WorksheetTypeRepository>((ref) => WorksheetTypeRepository());
+final worksheetRepoProvider = Provider<WorksheetRepository>((ref) => WorksheetRepository(ref));
+final stopWordsProvider = Provider<StopWordsRepository>((ref) => StopWordsRepository());
+
+class WorksheetEventNotifier extends StateNotifier<WorksheetEvent> {
+  WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default, List.empty()));
+}
+
+final worksheetEventProvider =
+    StateNotifierProvider<WorksheetEventNotifier, WorksheetEvent>((ref) => WorksheetEventNotifier());
+
+final childWorksheetsProvider = FutureProvider.autoDispose.family<List<Worksheet>, int>((ref, id) async {
+  final repo = ref.watch(worksheetRepoProvider);
+  return repo.getChildWorksheets(id);
+});
+
+class WorksheetFilter {
+  final bool includeDone;
+  final bool includeArchived;
+  final bool shouldRefresh;
+  final String? query;
+  WorksheetFilter(this.includeDone, {this.includeArchived = false, this.shouldRefresh = true, this.query});
+
+  bool operator ==(o) =>
+      o is WorksheetFilter &&
+      o.includeDone == includeDone &&
+      o.includeArchived == includeArchived &&
+      o.shouldRefresh == shouldRefresh &&
+      o.query == query;
+
+  @override
+  int get hashCode => Object.hash(includeDone, includeArchived, shouldRefresh, query);
+
+  @override
+  String toString() {
+    return "WorksheetFilter(includeDone: $includeDone, includeArchived: $includeArchived, shouldRefresh: $shouldRefresh, query: $query)";
+  }
+}
+
+final filterProvider = StateProvider((ref) => WorksheetFilter(false));
+
 class WorksheetRepository {
+  LinkedHashMap<int, Worksheet>? _cache;
+
   WorksheetRepository(this.ref);
   final Ref ref;
 
   Future<int> addWorksheet(Worksheet worksheet) async {
-    debugPrint("will szve dibbz ${worksheet.toMap(true)}", wrapWidth: 1024);
     final db = await ref.read(worksheetDbProvider.future);
-    return db.insert(
+    final result = await db.insert(
       'notes',
       worksheet.id == -1 ? worksheet.toMap(false) : worksheet.toMap(true),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    if (result > 0) {
+      _cache = null;
+    }
+    return result;
   }
 
   Future<void> archiveWorksheet(Worksheet worksheet) async {
@@ -125,7 +155,10 @@ class WorksheetRepository {
 
       int? idToUpdate = worksheet.id;
 
-      db.update("notes", worksheet.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
+      final result = await db.update("notes", worksheet.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
+      if (result > 0) {
+        _cache = null;
+      }
     } else {
       print("Ignoring unsaved note");
     }
@@ -133,20 +166,49 @@ class WorksheetRepository {
 
   Future<int> deleteWorksheet(int id) async {
     final db = await ref.read(worksheetDbProvider.future);
-    return db.delete("notes", where: "id = ?", whereArgs: [id]);
+    final result = await db.delete("notes", where: "id = ?", whereArgs: [id]);
+    if (result > 0) {
+      _cache?.remove(result);
+    }
+    return result;
   }
 
   Future<Worksheet?> getWorksheet(int id) async {
-    final db = await ref.read(worksheetDbProvider.future);
-    final res = await db.query("notes", where: "id = ?", whereArgs: [id], distinct: true);
-    return res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).firstOrNull : null;
+    final cached = _cache?[id];
+    if (cached != null) {
+      return cached;
+    } else {
+      final db = await ref.read(worksheetDbProvider.future);
+      final res = await db.query("notes", where: "id = ?", whereArgs: [id], distinct: true);
+      return res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).firstOrNull : null;
+    }
   }
 
-  Future<List<Worksheet>> getWorksheets() async {
-    final db = await ref.read(worksheetDbProvider.future);
-    // query all the worksheets sorted by last edited
-    var res = await db.query("notes", orderBy: "date_created desc", where: "is_archived = ?", whereArgs: [0]);
-    return res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).toList() : [];
+  Future<List<Worksheet>> getWorksheets(/*{bool includeArchived = false}*/) async {
+    final cached = _cache?.values.toList(growable: false);
+    if (cached != null) {
+      return cached;
+    } else {
+      final db = await ref.read(worksheetDbProvider.future);
+
+      // query all the worksheets sorted by last edited
+      /* var res = await db
+          .query("notes", orderBy: "date_created desc", where: "is_archived = ?", whereArgs: [includeArchived ? 1 : 0]);*/
+      // include all worksheets for now
+      var res = await db.query("notes", orderBy: "date_created desc");
+      final List<Worksheet> result =
+          res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).toList() : [];
+      final cache = LinkedHashMap<int, Worksheet>();
+      result.forEach((ws) {
+        cache[ws.id] = ws;
+      });
+      _cache = cache;
+      return result;
+    }
+  }
+
+  bool hasCache() {
+    return _cache != null;
   }
 
   Future<List<Worksheet>> getChildWorksheets(int id) async {
@@ -158,7 +220,12 @@ class WorksheetRepository {
 
   Future<int> updateChildren(int id) async {
     final db = await ref.read(worksheetDbProvider.future);
-    return db.update("notes", {"parent_id": -1}, where: "parent_id = ?", whereArgs: [id]);
+    final result = await db.update("notes", {"parent_id": -1}, where: "parent_id = ?", whereArgs: [id]);
+
+    if (result > 0) {
+      _cache = null;
+    }
+    return result;
   }
 }
 
@@ -182,15 +249,43 @@ class WorksheetEvent {
   }
 }
 
-class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
+class WorksheetPayload {
+  final List<Worksheet> worksheets;
+  final WorksheetEvent event;
+  WorksheetPayload(this.worksheets, this.event);
+
+  bool operator ==(o) => o is WorksheetPayload && o.event == event && o.worksheets == worksheets;
+
   @override
-  FutureOr<List<Worksheet>> build() {
+  int get hashCode => Object.hash(event, worksheets);
+
+  @override
+  String toString() {
+    return "WorksheetPayload(event: $event, worksheets: ${worksheets.map((w) => w.id).toList()})";
+  }
+}
+
+class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
+  @override
+  FutureOr<WorksheetPayload> build() async {
+    final filter = ref.watch(filterProvider);
+    WorksheetPayload? oldValue = state.value;
+    state = const AsyncLoading();
     final repo = ref.watch(worksheetRepoProvider);
-    return repo.getWorksheets().then((worksheets) {
+    final wasCached = repo.hasCache();
+    final results = await repo.getWorksheets();
+    final stopWords = await ref.watch(stopWordsProvider).getStopWords();
+    final filteredResults = applyFilter(filter, results, stopWords);
+    WorksheetEvent event;
+    if (!wasCached ||
+        ((oldValue?.worksheets.map((ws) => ws.id).toSet() ?? <int>{}) != filteredResults.map((ws) => ws.id).toSet())) {
       final provider = ref.read(worksheetEventProvider.notifier);
-      provider.state = WorksheetEvent(WorksheetEventType.Reloaded, worksheets);
-      return worksheets;
-    });
+      event = WorksheetEvent(WorksheetEventType.Reloaded, filteredResults);
+      provider.state = event;
+    } else {
+      event = oldValue?.event ?? WorksheetEvent(WorksheetEventType.Default, filteredResults);
+    }
+    return WorksheetPayload(filteredResults, event);
   }
 
   Future<int> addWorksheet(Worksheet worksheet) async {
@@ -199,17 +294,17 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     worksheet.dateLastEdited = DateTime.now();
     final res = await repo.addWorksheet(worksheet);
     if (res > 0) {
-      final worksheets = await AsyncValue.guard(repo.getWorksheets);
+      final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
       final cloned = Worksheet.clone(worksheet);
       cloned.id = res;
-      worksheets.whenData((data) {
+      asyncWorksheets.whenData((worksheets) {
         final provider = ref.read(worksheetEventProvider.notifier);
-        provider.state = WorksheetEvent(
-            worksheet.id == -1 ? WorksheetEventType.Added : WorksheetEventType.Modified, data,
+        final event = WorksheetEvent(
+            worksheet.id == -1 ? WorksheetEventType.Added : WorksheetEventType.Modified, worksheets,
             worksheet: cloned, worksheetId: cloned.id);
+        provider.state = event;
+        state = AsyncValue.data(WorksheetPayload(worksheets, event));
       });
-
-      state = worksheets;
     } else {
       throw new WorksheetDbException("Worksheet couldn't be added!");
     }
@@ -231,9 +326,10 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
       final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
       asyncWorksheets.whenData((worksheets) async {
         final provider = ref.read(worksheetEventProvider.notifier);
-        provider.state = WorksheetEvent(WorksheetEventType.Deleted, worksheets, worksheetId: id);
+        final event = WorksheetEvent(WorksheetEventType.Deleted, worksheets, worksheetId: id);
+        provider.state = event;
+        state = AsyncValue.data(WorksheetPayload(worksheets, event));
       });
-      state = asyncWorksheets;
     } else {
       final exception = new WorksheetDbException("Worksheet $id couldn't be deleted!");
       state = AsyncError(exception, StackTrace.current);
@@ -244,25 +340,59 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<List<Worksheet>> {
     final repo = ref.watch(worksheetRepoProvider);
     state = const AsyncLoading();
     await repo.archiveWorksheet(worksheet);
-    final worksheets = await AsyncValue.guard(repo.getWorksheets);
-    worksheets.whenData((data) {
+    final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
+    asyncWorksheets.whenData((worksheets) {
       final provider = ref.read(worksheetEventProvider.notifier);
-      provider.state =
-          WorksheetEvent(WorksheetEventType.Archived, data, worksheet: worksheet, worksheetId: worksheet.id);
+      final event =
+          WorksheetEvent(WorksheetEventType.Archived, worksheets, worksheet: worksheet, worksheetId: worksheet.id);
+      provider.state = event;
+      state = AsyncValue.data(WorksheetPayload(worksheets, event));
     });
-    state = worksheets;
   }
 
   List<Worksheet>? getCachedChildren(int id) {
-    return state.value?.where((e) => e.parentId == id).toList(growable: false);
+    return state.value?.worksheets.where((e) => e.parentId == id).toList(growable: false);
   }
 
   Set<String> getCachedTags() {
-    if (state.value?.isNotEmpty ?? false) {
-      return extractGlobalTags(state.value!);
+    if (state.value?.worksheets.isNotEmpty ?? false) {
+      return extractGlobalTags(state.value!.worksheets);
     } else {
       return <String>{};
     }
+  }
+}
+
+final splitPattern = new RegExp(r"[,\s]");
+List<Worksheet> applyFilter(WorksheetFilter filter, List<Worksheet> worksheets, Set<String> stopWords) {
+  final base =
+      worksheets.where((w) => (filter.includeArchived || !w.isArchived) && (filter.includeDone || !w.isComplete));
+  if (filter.query == null) {
+    return base.toList();
+  } else if (filter.query!.isEmpty) {
+    return <Worksheet>[];
+  } else {
+    final asTags = filter.query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w)).toSet();
+    List<Tuple2<Worksheet, int>> tagged = [];
+    List<Worksheet> matched = [];
+    base
+        .map((w) => Tuple2(
+            w, w.tags?.isEmpty ?? true ? 0 : asTags.intersection(w.tags!.map((s) => s.toLowerCase()).toSet()).length))
+        .forEach((t) {
+      if (t.item2 > 0) {
+        tagged.add(t);
+      } else {
+        if (t.item1.content.questions
+                .map((q) => q.answer.toLowerCase())
+                .firstWhereOrNull((a) => a.contains(filter.query!)) !=
+            null) {
+          matched.add(t.item1);
+        }
+      }
+    });
+    Set<Worksheet> result = tagged.sorted((t1, t2) => t2.item2.compareTo(t1.item2)).map((t) => t.item1).toSet();
+    result.addAll(matched);
+    return result.toList();
   }
 }
 
@@ -297,10 +427,8 @@ class StopWordsRepository {
       return _stopWords!;
     }
     final String raw = await rootBundle.loadString('assets/stop_words.txt');
-    print("got raw stopwords of len ${raw.length}");
     LineSplitter ls = new LineSplitter();
     _stopWords = ls.convert(raw).map((s) => s.trim()).toSet();
-    print("found ${_stopWords!.length} stopwords");
     return _stopWords!;
   }
 }

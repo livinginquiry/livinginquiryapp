@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:livinginquiryapp/widgets/app_bar.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -47,58 +48,53 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      extendBodyBehindAppBar: false,
+      extendBody: false,
       appBar: PreferredSize(
           preferredSize: Size(double.infinity, 60),
-          child: AppBar(
-            actions: _appBarActions(context),
-            elevation: 0,
-            centerTitle: true,
-            title: Transform(
-                transform: new Matrix4.translationValues(0.0, 2.0, 0.0),
-                child: Container(
-                    color: Theme.of(context).backgroundColor,
-                    child: TabBar(
-                      controller: _tabController,
-                      labelPadding: EdgeInsets.only(left: 5, right: 5),
-                      tabs: [
-                        Tab(
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                                color: _tabController.index == 0
-                                    ? Theme.of(context).accentColor
-                                    : Theme.of(context).scaffoldBackgroundColor),
-                            child: Align(
-                              alignment: Alignment.center,
-                              child: Text("STARTED"),
-                            ),
-                          ),
-                        ),
-                        Tab(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                              color: _tabController.index == 1
-                                  ? Theme.of(context).accentColor
-                                  : Theme.of(context).scaffoldBackgroundColor,
-                            ),
-                            child: Align(
-                              alignment: Alignment.center,
-                              child: Text("DONE"),
-                            ),
-                          ),
-                        )
-                      ],
-                    ))),
-            bottom: PreferredSize(
-                child: Container(
-                  color: Theme.of(context).accentColor,
-                  height: 12.0,
-                ),
-                preferredSize: Size.fromHeight(12.0)),
-          )),
+          child: Transform(
+              transform: new Matrix4.translationValues(0.0, 0.0, 0.0),
+              child: SearchAppBar(
+                  Container(
+                      color: Theme.of(context).backgroundColor,
+                      child: Transform(
+                          transform: new Matrix4.translationValues(0.0, 2.0, 0.0),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelPadding: EdgeInsets.only(left: 5, right: 5),
+                            tabs: [
+                              Tab(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+                                      color: _tabController.index == 0
+                                          ? Theme.of(context).accentColor
+                                          : Theme.of(context).scaffoldBackgroundColor),
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: Text("STARTED"),
+                                  ),
+                                ),
+                              ),
+                              Tab(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+                                    color: _tabController.index == 1
+                                        ? Theme.of(context).accentColor
+                                        : Theme.of(context).scaffoldBackgroundColor,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: Text("DONE"),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ))),
+                  _appBarActions(context)))),
       body: SafeArea(
         child: _body(_tabController),
         right: true,
@@ -239,7 +235,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   }
 
   Future<void> _shareWorksheets() async {
-    final List<Worksheet> worksheets = await ref.read(worksheetNotifierProvider.future);
+    final payload = await ref.read(worksheetNotifierProvider.future);
+    final List<Worksheet> worksheets = payload.worksheets;
     final result = worksheets.fold("", (acc, v) {
       acc += "${v.content.displayName}\n${v.content.toReadableFormat()}\n\n";
       return acc;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class ChipTags extends StatefulWidget {
   const ChipTags(
@@ -17,29 +18,24 @@ class ChipTags extends StatefulWidget {
       this.stopWords})
       : super(key: key);
 
-  ///sets the remove icon Color
+  ///remove icon Color
   final Color? iconColor;
 
-  ///sets the chip background color
+  ///chip background color
   final Color? chipColor;
 
-  ///sets the color of text inside chip
+  ///color of text inside chip
   final Color? textColor;
 
   ///container decoration
   final InputDecoration? decoration;
 
-  ///set keyboradType
   final TextInputType? keyboardType;
 
   final Set<String>? suggestions;
 
-  /// list of String to display
-  final List<String> tags;
+  final Set<String> tags;
 
-  /// Default `createTagOnSumit = false`
-  /// Creates new tag if user submit.
-  /// If true they separtor will be ignored.
   final bool createTagOnSubmit;
 
   final bool autocorrect;
@@ -62,121 +58,94 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
 
   ///Form key for TextField
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _typeAheadController = TextEditingController();
+  final FocusNode _fieldFocusNode = FocusNode();
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.max,
       children: <Widget>[
         Form(
-            key: _formKey,
-            child: Autocomplete<String>(
-                optionsBuilder: (TextEditingValue textEditingValue) {
-                  if ((widget.suggestions?.isEmpty ?? true) || textEditingValue.text.isEmpty) {
-                    return List.empty();
-                  } else {
-                    return widget.suggestions!
-                        .where((String tag) =>
-                            tag.toLowerCase().startsWith(textEditingValue.text.toLowerCase()) &&
-                            !widget.tags.contains(tag))
-                        .toList();
-                  }
-                },
-                displayStringForOption: (String option) => option,
-                fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController,
-                    FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
-                  return TextField(
-                    autocorrect: widget.autocorrect,
-                    controller: fieldTextEditingController,
-                    focusNode: fieldFocusNode,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                    decoration: widget.decoration ??
-                        InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          hintText: "Enter one or more tags separated by spaces",
-                        ),
-                    keyboardType: widget.keyboardType ?? TextInputType.text,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: widget.createTagOnSubmit
-                        ? (value) {
-                            final tags = _extractTags(value);
-                            if (tags.isNotEmpty) {
-                              widget.tags.addAll(tags);
-
-                              ///setting the controller to empty
-                              fieldTextEditingController.clear();
-
-                              ///resetting form
-                              _formKey.currentState!.reset();
-
-                              fieldFocusNode.requestFocus();
-                              widget.onChanged();
-                            }
-                          }
-                        : null,
-                    onChanged: widget.createTagOnSubmit
-                        ? null
-                        : (value) {
-                            final tags = _extractTags(value);
-                            if (tags.isNotEmpty) {
-                              widget.tags.addAll(tags);
-
-                              ///setting the controller to empty
-                              fieldTextEditingController.clear();
-
-                              ///resetting form
-                              _formKey.currentState!.reset();
-
-                              // setState(() {});
-                              widget.onChanged();
-                            }
-                          },
-                  );
-                },
-                onSelected: (String selection) {
-                  print('Selected: $selection');
-                },
-                optionsViewBuilder:
-                    (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      child: Container(
-                        // width: 300,
-                        color: Colors.white,
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero, //EdgeInsets.all(10.0),
-                          shrinkWrap: true,
-                          itemCount: options.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            final String option = options.elementAt(index);
-                            return InkWell(
-                              onTap: () {
-                                onSelected(option);
-                              },
-                              child: Builder(builder: (BuildContext context) {
-                                final bool highlight = AutocompleteHighlightedOption.of(context) == index;
-                                if (highlight) {
-                                  SchedulerBinding.instance.addPostFrameCallback((Duration timeStamp) {
-                                    Scrollable.ensureVisible(context, alignment: 0.5);
-                                  });
-                                }
-                                return Container(
-                                  color: highlight ? Theme.of(context).focusColor : null,
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    RawAutocomplete.defaultStringForOption(option),
-                                  ),
-                                );
-                              }),
-                            );
-                          },
-                        ),
-                      ),
+          key: _formKey,
+          child: TypeAheadFormField(
+            direction: AxisDirection.up,
+            hideOnEmpty: true,
+            minCharsForSuggestions: 1,
+            hideKeyboard: false,
+            // autoFlipDirection: true,
+            textFieldConfiguration: TextFieldConfiguration(
+              controller: _typeAheadController,
+              focusNode: _fieldFocusNode,
+              autocorrect: widget.autocorrect,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              decoration: widget.decoration ??
+                  InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                })),
+                    hintText: "Enter one or more tags separated by spaces",
+                  ),
+              keyboardType: widget.keyboardType ?? TextInputType.text,
+              textInputAction: TextInputAction.done,
+              onSubmitted: widget.createTagOnSubmit
+                  ? (value) {
+                      final tags = _extractTags(value);
+                      if (tags.isNotEmpty) {
+                        widget.tags.addAll(tags);
+
+                        _typeAheadController.clear();
+
+                        ///reset form
+                        _formKey.currentState!.reset();
+
+                        _fieldFocusNode.requestFocus();
+                        widget.onChanged();
+                      }
+                    }
+                  : null,
+              onChanged: widget.createTagOnSubmit
+                  ? null
+                  : (value) {
+                      final tags = _extractTags(value);
+                      if (tags.isNotEmpty) {
+                        widget.tags.addAll(tags);
+
+                        _typeAheadController.clear();
+
+                        _formKey.currentState!.reset();
+
+                        // setState(() {});
+                        widget.onChanged();
+                      }
+                    },
+            ),
+            suggestionsCallback: (pattern) {
+              return widget.suggestions!
+                  .where(
+                      (String tag) => tag.toLowerCase().startsWith(pattern.toLowerCase()) && !widget.tags.contains(tag))
+                  .toList();
+            },
+            itemBuilder: (context, suggestion) {
+              return ListTile(
+                title: Text(suggestion),
+              );
+            },
+            transitionBuilder: (context, suggestionsBox, controller) {
+              return suggestionsBox;
+            },
+            onSuggestionSelected: (suggestion) {
+              widget.tags.add(suggestion);
+
+              _typeAheadController.clear();
+
+              ///reset form
+              _formKey.currentState!.reset();
+
+              widget.onChanged();
+            },
+            onSaved: (value) {},
+          ),
+        ),
         SizedBox(height: 5),
         _chipListPreview()
       ],
@@ -194,10 +163,10 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
 
   Visibility _chipListPreview() {
     return Visibility(
-      //if length is 0 it will not occupie any space
+      //if length is 0 it will not occupy any space
       visible: widget.tags.length > 0,
       child: Wrap(
-        ///creating a list
+        ///create list
         children: widget.tags.map((text) {
           return Padding(
               padding: const EdgeInsets.all(2.0),
@@ -211,7 +180,6 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
                 onSelected: (value) {
                   widget.tags.remove(text);
                   widget.onChanged();
-                  // setState(() {});
                 },
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
