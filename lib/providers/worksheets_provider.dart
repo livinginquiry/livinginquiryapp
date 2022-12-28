@@ -372,27 +372,30 @@ List<Worksheet> applyFilter(WorksheetFilter filter, List<Worksheet> worksheets, 
   } else if (filter.query!.isEmpty) {
     return <Worksheet>[];
   } else {
-    final asTags = filter.query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w)).toSet();
-    List<Tuple2<Worksheet, int>> tagged = [];
+    final searchTerms =
+        filter.query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w)).toSet();
     List<Worksheet> matched = [];
     base
         .map((w) => Tuple2(
-            w, w.tags?.isEmpty ?? true ? 0 : asTags.intersection(w.tags!.map((s) => s.toLowerCase()).toSet()).length))
+            w,
+            w.tags?.isEmpty ?? true
+                ? <String>{}
+                : searchTerms.intersection(w.tags!.map((s) => s.toLowerCase()).toSet())))
         .forEach((t) {
-      if (t.item2 > 0) {
-        tagged.add(t);
-      } else {
-        if (t.item1.content.questions
-                .map((q) => q.answer.toLowerCase())
-                .firstWhereOrNull((a) => a.contains(filter.query!)) !=
-            null) {
-          matched.add(t.item1);
-        }
+      // all the words not matched by tags in this worksheet
+      final remaining = Set.from(searchTerms.difference(t.item2));
+      final answers = t.item1.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
+
+      // of the remaining words, find the first NOT included in the worksheet text
+      final notFound =
+          remaining.firstWhereOrNull((word) => answers.firstWhereOrNull((answer) => answer.contains(word)) == null);
+
+      // all matched
+      if (notFound == null) {
+        matched.add(t.item1);
       }
     });
-    Set<Worksheet> result = tagged.sorted((t1, t2) => t2.item2.compareTo(t1.item2)).map((t) => t.item1).toSet();
-    result.addAll(matched);
-    return result.toList();
+    return matched;
   }
 }
 
