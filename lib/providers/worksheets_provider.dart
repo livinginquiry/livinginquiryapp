@@ -368,8 +368,11 @@ List<Worksheet> applyFilter(WorksheetFilter filter, List<Worksheet> worksheets, 
   if (filter.query == null) {
     return base.toList();
   } else {
-    final searchTerms =
-        filter.query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w)).toSet();
+    final searchTerms = filter.query!
+        .split(splitPattern)
+        .map((s) => s.trim())
+        .where((w) => !stopWords.contains(w) && w.isNotEmpty)
+        .toSet();
     if (searchTerms.isEmpty) {
       return <Worksheet>[];
     }
