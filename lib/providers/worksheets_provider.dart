@@ -168,7 +168,7 @@ class WorksheetRepository {
     final db = await ref.read(worksheetDbProvider.future);
     final result = await db.delete("notes", where: "id = ?", whereArgs: [id]);
     if (result > 0) {
-      _cache?.remove(result);
+      _cache?.remove(id);
     }
     return result;
   }

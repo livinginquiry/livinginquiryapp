@@ -59,19 +59,8 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
       rippleStartY = details.globalPosition.dy;
     });
 
-    print("tapup pointer location $rippleStartX, $rippleStartY");
     _controller.forward();
   }
-
-  /*void _onSearchTapDown(TapDownDetails details) {
-    setState(() {
-      rippleStartX = details.globalPosition.dx;
-      rippleStartY = details.globalPosition.dy;
-    });
-
-    print("pointer location $rippleStartX, $rippleStartY");
-    _controller.forward();
-  }*/
 
   cancelSearch({bool shouldRefresh = true}) {
     setState(() {

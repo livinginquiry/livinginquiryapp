@@ -114,7 +114,6 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
 
                         _formKey.currentState!.reset();
 
-                        // setState(() {});
                         widget.onChanged();
                       }
                     },
@@ -136,11 +135,11 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
             onSuggestionSelected: (suggestion) {
               widget.tags.add(suggestion);
 
-              _typeAheadController.clear();
-
               ///reset form
               _formKey.currentState!.reset();
 
+              // clear controller AFTER resetting to prevent unbidden reappearance
+              _typeAheadController.clear();
               widget.onChanged();
             },
             onSaved: (value) {},
@@ -166,7 +165,7 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
       //if length is 0 it will not occupy any space
       visible: widget.tags.length > 0,
       child: Wrap(
-        ///create list
+        // fancy some chips?
         children: widget.tags.map((text) {
           return Padding(
               padding: const EdgeInsets.all(2.0),
