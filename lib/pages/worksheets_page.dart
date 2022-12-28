@@ -39,6 +39,7 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
             return const Center(child: CircularProgressIndicator());
           } else {
             final worksheets = snapshot.data!.worksheets;
+            final event = snapshot.data!;
             return Container(
                 color: Colors.white,
                 child: Padding(
@@ -46,7 +47,8 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
                     child: Builder(builder: (BuildContext context) {
                       final filtered = worksheets
                           .where((element) =>
-                              (widget.showDone == element.isComplete) && (_showChildren || element.parentId == -1))
+                              ((widget.showDone == element.isComplete) && (_showChildren || element.parentId == -1)) ||
+                              (!widget.showDone && event.type == WorksheetEventType.Searching))
                           .toList();
                       final parentMap = worksheets.fold(ListMultimap<int, int>(), (acc, ws) {
                         if (ws.parentId != -1) {
