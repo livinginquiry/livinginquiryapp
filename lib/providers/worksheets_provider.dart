@@ -5,7 +5,6 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
@@ -52,7 +51,7 @@ class WorksheetDb {
     var dbPath = join(path, 'notes.db');
     // ignore: argument_type_not_assignable
     Database dbConnection = await openDatabase(dbPath, version: 5, onCreate: (Database db, int version) async {
-      print("executing create query from onCreate callback");
+      print("executing create query from onCreate callback: ${_buildCreateQuery()}");
       await db.execute(_buildCreateQuery());
     }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
       print("upgrading from $oldVersion to $newVersion");
