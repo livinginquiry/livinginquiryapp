@@ -12,6 +12,7 @@ import 'package:share/share.dart';
 import 'package:tuple/tuple.dart';
 import 'package:validators/validators.dart';
 
+import '../providers/preferences.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
@@ -61,6 +62,10 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     _keyboardActionsConfig = _buildConfig();
 
     _stopWords = _getStopWords();
+
+    Future.delayed(Duration.zero, () async {
+      ref.watch(prefsUtilProvider).setLastWorksheetId(_worksheet.id);
+    });
   }
 
   @override
@@ -70,12 +75,13 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.paused:
-        _readyToPop(this.context);
+        _fbKey.currentState!.save();
+        await _persistData(context);
         break;
       case AppLifecycleState.resumed:
         break;
@@ -432,6 +438,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   Future<bool> _readyToPop(BuildContext context) async {
     //show saved toast after calling _persistData function.
+    ref.watch(prefsUtilProvider).clearLastWorksheetId();
     _fbKey.currentState!.save();
     await _persistData(context);
     Navigator.pop(context, _worksheet.id);

@@ -21,11 +21,6 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
   bool get wantKeepAlive => true;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     final payload = ref.watch(staticallyFilteredWorksheetProvider(widget.filter).future);

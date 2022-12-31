@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
+import '../providers/preferences.dart';
 import 'dynamic_worksheets_view.dart';
 import 'worksheet_page.dart';
 import 'worksheets_page.dart';
@@ -38,6 +39,20 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       }
     };
     _tabController.addListener(_tabListener);
+
+    Future.delayed(
+      Duration.zero,
+      () async {
+        final lastWorksheetId = ref.watch(prefsUtilProvider).getLastWorksheetId();
+        if (lastWorksheetId >= 0) {
+          final repo = ref.watch(worksheetRepoProvider);
+          final worksheet = await repo.getWorksheet(lastWorksheetId);
+          if (worksheet != null) {
+            Navigator.push(context, MaterialPageRoute(builder: (ctx) => WorksheetPage(worksheet)));
+          }
+        }
+      },
+    );
   }
 
   @override

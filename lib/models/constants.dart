@@ -14,3 +14,4 @@ const WORKSHEET_COLORS = [
   Color(0xffe6c9a9), // light brown
   Color(0xffe9eaee) // light gray
 ];
+const String lastWorksheetIdKey = "lastWorksheetId";
