@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'constants.dart' as constants;
@@ -13,20 +14,26 @@ class Worksheet {
   DateTime dateLastEdited;
   Color noteColor;
   bool isArchived;
-  bool isComplete;
+  bool isStarred;
   int parentId;
   Set<String>? tags;
 
+  // not persisted
+  Set<int>? childIds;
+
   Worksheet(this.title, this.content, this.dateCreated, this.dateLastEdited, this.noteColor,
-      {this.id = -1, this.isArchived = false, this.isComplete = false, this.parentId = -1, this.tags});
+      {this.id = -1, this.isArchived = false, this.isStarred = false, this.parentId = -1, this.tags, this.childIds});
 
   Worksheet.clone(Worksheet other)
-      : this(other.title, other.content, other.dateCreated, other.dateLastEdited, other.noteColor,
+      : this(other.title, other.content.clone(), other.dateCreated, other.dateLastEdited, other.noteColor,
             id: other.id,
             isArchived: other.isArchived,
-            isComplete: other.isComplete,
+            isStarred: other.isStarred,
             parentId: other.parentId,
-            tags: other.tags);
+            tags: other.tags != null ? Set.from(other.tags!) : null,
+            childIds: other.childIds != null ? Set.from(other.childIds!) : null);
+
+  bool get hasParent => parentId != -1;
 
   Map<String, dynamic> toMap(bool forUpdate) {
     var data = {
@@ -35,8 +42,8 @@ class Worksheet {
       'date_created': util.epochFromDate(dateCreated),
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.value,
-      'is_archived': isArchived ? 1 : 0, //  for later use for integrating archiving
-      'is_complete': isComplete ? 1 : 0,
+      'is_archived': isArchived ? 1 : 0,
+      'is_starred': isStarred ? 1 : 0,
       'parent_id': this.parentId,
       'tags': (this.tags?.isNotEmpty ?? false) ? this.tags!.join("|") : null
     };
@@ -53,13 +60,10 @@ class Worksheet {
       DateTime.fromMillisecondsSinceEpoch(json["date_last_edited"] * 1000),
       Color(json["note_color"] ?? constants.WORKSHEET_COLORS[0].value),
       id: json["id"] ?? -1,
-      isComplete: (json['is_complete'] ?? 0) == 1,
+      isStarred: (json['is_starred'] ?? 0) == 1,
+      isArchived: (json['is_archived'] ?? 0) == 1,
       parentId: json["parent_id"] ?? -1,
       tags: json["tags"]?.split("|").toSet());
-
-  void archiveThisNote() {
-    isArchived = true;
-  }
 
   @override
   toString() {
@@ -71,11 +75,29 @@ class Worksheet {
       'date_last_edited': util.epochFromDate(dateLastEdited),
       'note_color': noteColor.toString(),
       'is_archived': isArchived,
-      'is_complete': isComplete,
+      'is_starred': isStarred,
       'parent_id': parentId,
-      'tags': tags
+      'tags': tags,
+      'childIds': childIds
     }.toString();
   }
+
+  bool operator ==(o) =>
+      o is Worksheet &&
+      o.id == id &&
+      o.title == title &&
+      o.content == content &&
+      o.dateCreated == dateCreated &&
+      o.dateLastEdited == dateLastEdited &&
+      o.noteColor == noteColor &&
+      o.isArchived == isArchived &&
+      o.isStarred == isStarred &&
+      o.parentId == parentId &&
+      setEquals(o.tags, tags);
+
+  @override
+  int get hashCode =>
+      Object.hash(id, title, content, dateCreated, dateLastEdited, noteColor, isArchived, isStarred, parentId, tags);
 }
 
 //TODO: make this dynamic(?)
@@ -133,6 +155,16 @@ class WorksheetContent {
   WorksheetContent clone() {
     return WorksheetContent.fromMap(toMap());
   }
+
+  bool operator ==(o) =>
+      o is WorksheetContent &&
+      listEquals(o.questions, questions) &&
+      o.type == type &&
+      o.displayName == displayName &&
+      listEquals(o.children, children);
+
+  @override
+  int get hashCode => Object.hash(questions, type, displayName, children);
 }
 
 enum QuestionType { freeform, multiple }
@@ -169,6 +201,17 @@ class Question {
   String toFormattedString({int index = -1}) {
     return "$question\n$answer\n";
   }
+
+  bool operator ==(o) =>
+      o is Question &&
+      o.question == question &&
+      o.answer == answer &&
+      o.type == type &&
+      o.prompt == prompt &&
+      listEquals(o.values, values);
+
+  @override
+  int get hashCode => Object.hash(question, answer, type, prompt, values);
 }
 
 class BadWorksheetFormat implements Exception {

@@ -10,7 +10,10 @@ import '../providers/worksheets_provider.dart';
 class SearchAppBar extends ConsumerStatefulWidget implements PreferredSizeWidget {
   final Widget title;
   final List<Widget> actions;
-  SearchAppBar(this.title, this.actions, {Key? key}) : super(key: key);
+  final void Function() onSearchOpen;
+  final void Function() onSearchClose;
+  SearchAppBar(this.title, this.actions, {required this.onSearchOpen, required this.onSearchClose, Key? key})
+      : super(key: key);
 
   @override
   Size get preferredSize => Size.fromHeight(60.0);
@@ -47,8 +50,8 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
     if (animationStatus == AnimationStatus.completed) {
       setState(() {
         isInSearchMode = true;
-        ref.read(filterProvider.notifier).state =
-            WorksheetFilter(true, includeArchived: true, shouldRefresh: true, query: "");
+        ref.read(searchFilterProvider.notifier).state =
+            WorksheetFilter(includeArchived: FilterMode.Yes, includeChildren: FilterMode.Yes, query: "");
       });
     }
   }
@@ -60,24 +63,23 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
     });
 
     _controller.forward();
+    widget.onSearchOpen();
   }
 
   cancelSearch({bool shouldRefresh = true}) {
     setState(() {
       isInSearchMode = false;
-      ref.read(filterProvider.notifier).state =
-          WorksheetFilter(true, includeArchived: false, shouldRefresh: shouldRefresh);
     });
 
     _controller.reverse();
+    widget.onSearchClose();
   }
 
   onSearchQueryChange(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      ref.read(filterProvider.notifier).state =
-          WorksheetFilter(true, includeArchived: true, shouldRefresh: true, query: query.toLowerCase().trim());
-      print('search $query');
+      ref.read(searchFilterProvider.notifier).state = WorksheetFilter(
+          includeArchived: FilterMode.Yes, includeChildren: FilterMode.Yes, query: query.toLowerCase().trim());
     });
   }
 
@@ -97,7 +99,6 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
               Icons.search,
               color: Colors.black,
             ),
-            // onTapDown: onSearchTapDown,
             onTapUp: onSearchTapUp,
             behavior: HitTestBehavior.opaque,
           ),
@@ -132,7 +133,8 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
     switch (event.type) {
       case WorksheetEventType.Added:
       case WorksheetEventType.Modified:
-        {
+      case WorksheetEventType.Archived:
+        if (isInSearchMode) {
           cancelSearch(shouldRefresh: false);
         }
         break;

@@ -113,7 +113,6 @@ class _WorksheetGroupPageState extends ConsumerState<WorksheetGroupPage>
   void _handleWorksheetEvent(WorksheetEvent event) {
     switch (event.type) {
       case WorksheetEventType.Added:
-      case WorksheetEventType.Archived:
       case WorksheetEventType.Modified:
         {
           if ((event.worksheetId ?? -1) == _parentWorksheet.id ||
@@ -122,6 +121,8 @@ class _WorksheetGroupPageState extends ConsumerState<WorksheetGroupPage>
           }
         }
         break;
+      case WorksheetEventType.Archived:
+      case WorksheetEventType.UnArchived:
       case WorksheetEventType.Deleted:
         {
           if (event.worksheetId == _parentWorksheet.id) {

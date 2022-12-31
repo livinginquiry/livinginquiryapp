@@ -30,7 +30,7 @@ class WorksheetPage extends ConsumerStatefulWidget {
 }
 
 class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindingObserver {
-  late Worksheet _worksheet;
+  late Worksheet _worksheet, _original;
   var _worksheetColor;
   bool _isNew = false;
   final GlobalKey<ScaffoldState> _globalKey = new GlobalKey<ScaffoldState>();
@@ -48,6 +48,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
+    _original = Worksheet.clone(widget.worksheet);
     _worksheetColor = _worksheet.noteColor;
     _tagList = _worksheet.tags ?? <String>{};
     if (widget.worksheet.id == -1) {
@@ -137,12 +138,12 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Text("Mark as done"),
+                    Text("Mark as Starred"),
                     Switch(
-                      value: this._worksheet.isComplete,
+                      value: this._worksheet.isStarred,
                       onChanged: (value) {
                         setState(() {
-                          this._worksheet.isComplete = value;
+                          this._worksheet.isStarred = value;
                           _fbKey.currentState!.save();
                         });
                       },
@@ -273,6 +274,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         builder: (BuildContext ctx) {
           return OptionsSheet(
             color: _worksheetColor,
+            isArchived: _worksheet.isArchived,
             callBackColorTapped: (color) => _changeColor(color),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
             lastModified: _worksheet.dateLastEdited,
@@ -281,22 +283,30 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   Future<void> _persistData(BuildContext context) async {
-    final db = ref.read(worksheetNotifierProvider.notifier);
-    if (_worksheet.content.questions.first.answer.isNotEmpty) {
+    if (_worksheet.content.questions.first.answer.isNotEmpty && _original != _worksheet) {
+      final db = ref.read(worksheetNotifierProvider.notifier);
       final id = await db.addWorksheet(_worksheet);
       _worksheet.id = id;
+    } else {
+      print("Ignoring since first question was empty or no changes");
     }
   }
 
   void bottomSheetOptionTappedHandler(moreOptions tappedOption) {
     switch (tappedOption) {
+      case moreOptions.archive:
+        {
+          _archiveWorksheet(_globalKey.currentContext!);
+          break;
+        }
+      case moreOptions.unarchive:
+        {
+          _unarchiveWorksheet(_globalKey.currentContext!);
+          break;
+        }
       case moreOptions.delete:
         {
-          if (_worksheet.id != -1) {
-            _deleteWorksheet(_globalKey.currentContext!);
-          } else {
-            _exitWithoutSaving(context);
-          }
+          _deleteWorksheet(_globalKey.currentContext!);
           break;
         }
       case moreOptions.share:
@@ -331,13 +341,75 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                           (value) => Navigator.of(context)
                             ..pop()
                             ..pop(),
-                          onError: (error, stackTrace) => print("Couldn't delete note: $error, $stackTrace"));
+                          onError: (error, stackTrace) => print("Couldn't delete worksheet: $error, $stackTrace"));
                     },
                     child: Text("Yes")),
                 TextButton(onPressed: () => {Navigator.of(context).pop()}, child: Text("No"))
               ],
             );
           });
+    }
+  }
+
+  void _archiveWorksheet(BuildContext context) {
+    if (_worksheet.id != -1) {
+      final msg = (_worksheet.childIds?.isEmpty ?? true)
+          ? "This worksheet will be archived"
+          : "This worksheet and ${_worksheet.childIds!.length} child worksheets will be archived";
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Confirm ?"),
+              content: Text(msg),
+              actions: <Widget>[
+                TextButton(
+                    onPressed: () async {
+                      final db = ref.read(worksheetNotifierProvider.notifier);
+                      db.archiveWorksheet(_worksheet).then(
+                          (value) => Navigator.of(context)
+                            ..pop()
+                            ..pop(),
+                          onError: (error, stackTrace) => print("Couldn't archive worksheet: $error, $stackTrace"));
+                    },
+                    child: Text("Yes")),
+                TextButton(onPressed: () => {Navigator.of(context).pop()}, child: Text("No"))
+              ],
+            );
+          });
+    } else {
+      _exitWithoutSaving(context);
+    }
+  }
+
+  void _unarchiveWorksheet(BuildContext context) {
+    if (_worksheet.id != -1) {
+      final msg = (_worksheet.childIds?.isEmpty ?? true)
+          ? "This worksheet will be un-archived"
+          : "This worksheet and ${_worksheet.childIds!.length} child worksheets will be un-archived";
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Confirm ?"),
+              content: Text(msg),
+              actions: <Widget>[
+                TextButton(
+                    onPressed: () async {
+                      final db = ref.read(worksheetNotifierProvider.notifier);
+                      db.archiveWorksheet(_worksheet, archive: false).then(
+                          (value) => Navigator.of(context)
+                            ..pop()
+                            ..pop(),
+                          onError: (error, stackTrace) => print("Couldn't un-archive worksheet: $error, $stackTrace"));
+                    },
+                    child: Text("Yes")),
+                TextButton(onPressed: () => {Navigator.of(context).pop()}, child: Text("No"))
+              ],
+            );
+          });
+    } else {
+      _exitWithoutSaving(context);
     }
   }
 

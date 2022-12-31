@@ -7,7 +7,9 @@ class WorksheetTile extends StatelessWidget {
   final Worksheet worksheet;
   final int numChildren;
   final void Function(Worksheet, bool) tileTapped;
-  const WorksheetTile(this.worksheet, this.numChildren, this.tileTapped, {Key? key}) : super(key: key);
+  final bool showStatusIcons;
+  const WorksheetTile(this.worksheet, this.numChildren, this.tileTapped, {this.showStatusIcons = false, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,19 +21,42 @@ class WorksheetTile extends StatelessWidget {
         color: tileColor,
         child: ListTile(
           dense: false,
-          title: Text(
-            title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          title: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            worksheet.isStarred && showStatusIcons
+                ? new IconTheme(data: new IconThemeData(color: Colors.deepOrange), child: new Icon(Icons.star))
+                : SizedBox.shrink(),
+            worksheet.isArchived && showStatusIcons ? Icon(Icons.archive) : SizedBox.shrink()
+          ]),
           subtitle: Column(children: [
             SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[Flexible(child: Text(subtitle))]),
-            SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-              Text(formatDateTime(worksheet.dateCreated)),
-            ])
           ]),
-          trailing: numChildren <= 0 ? null : Transform.translate(offset: Offset(8, -10), child: _getIcon()),
+          trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      numChildren <= 0
+                          ? SizedBox.shrink()
+                          : Transform.translate(offset: Offset(0, -10), child: _getIcon())
+                    ]),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Container(
+                          padding: EdgeInsets.only(bottom: 3), child: Text(formatDateTime(worksheet.dateCreated))),
+                    ])
+              ]),
         ));
 
     return GestureDetector(

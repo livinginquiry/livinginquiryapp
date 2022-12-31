@@ -9,14 +9,15 @@ import '../providers/worksheets_provider.dart';
 import '../widgets/worksheet_tile.dart';
 import 'worksheet_group_page.dart';
 
-class WorksheetsPage extends ConsumerStatefulWidget {
-  final WorksheetFilter filter;
-  const WorksheetsPage(this.filter, {Key? key}) : super(key: key);
+class DynamicWorksheetsView extends ConsumerStatefulWidget {
+  final StateProvider<WorksheetFilter?> filterProvider;
+  const DynamicWorksheetsView(this.filterProvider, {Key? key}) : super(key: key);
   @override
-  _WorksheetsPageState createState() => _WorksheetsPageState();
+  _DynamicWorksheetsViewState createState() => _DynamicWorksheetsViewState();
 }
 
-class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticKeepAliveClientMixin<WorksheetsPage> {
+class _DynamicWorksheetsViewState extends ConsumerState<DynamicWorksheetsView>
+    with AutomaticKeepAliveClientMixin<DynamicWorksheetsView> {
   @override
   bool get wantKeepAlive => true;
 
@@ -28,7 +29,7 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final payload = ref.watch(staticallyFilteredWorksheetProvider(widget.filter).future);
+    final payload = ref.watch(dynamicallyFilteredWorksheetProvider(widget.filterProvider).future);
     return FutureBuilder(
         future: payload,
         builder: (BuildContext context, AsyncSnapshot<WorksheetPayload> snapshot) {
@@ -42,13 +43,14 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
                     padding: EdgeInsets.zero,
                     child: Builder(builder: (BuildContext context) {
                       if (worksheets.isEmpty) {
-                        return const Center(child: Text('No Worksheets Found'));
+                        return const Center(child: Text('No Results'));
                       } else {
                         return GroupedListView<Worksheet, WorksheetBucketHolder>(
                           elements: worksheets,
                           itemBuilder: (_, worksheet) {
                             return WorksheetTile(
-                                worksheet, worksheet.childIds?.length ?? 0, _worksheetTileTapped(context));
+                                worksheet, worksheet.childIds?.length ?? 0, _worksheetTileTapped(context),
+                                showStatusIcons: true);
                           },
                           groupBy: (ws) => getDateBucket(ws.dateCreated),
                           groupSeparatorBuilder: (WorksheetBucketHolder holder) => Padding(

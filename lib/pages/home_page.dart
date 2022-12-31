@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:livinginquiryapp/pages/worksheet_filter_view_page.dart';
 import 'package:livinginquiryapp/widgets/app_bar.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
+import 'dynamic_worksheets_view.dart';
 import 'worksheet_page.dart';
 import 'worksheets_page.dart';
 
@@ -23,6 +25,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   late final speedDialMenu;
   late final TabController _tabController;
   late final _tabListener;
+  bool _searching = false;
+
   @override
   void initState() {
     super.initState();
@@ -73,7 +77,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                                           : Theme.of(context).scaffoldBackgroundColor),
                                   child: Align(
                                     alignment: Alignment.center,
-                                    child: Text("STARTED"),
+                                    child: Text("ALL"),
                                   ),
                                 ),
                               ),
@@ -88,13 +92,19 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                                   ),
                                   child: Align(
                                     alignment: Alignment.center,
-                                    child: Text("DONE"),
+                                    child: Text("STARRED"),
                                   ),
                                 ),
                               )
                             ],
                           ))),
-                  _appBarActions(context)))),
+                  _appBarActions(context),
+                  onSearchOpen: () => setState(() {
+                        _searching = true;
+                      }),
+                  onSearchClose: () => setState(() {
+                        _searching = false;
+                      })))),
       body: SafeArea(
         child: _body(_tabController),
         right: true,
@@ -155,10 +165,14 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   }
 
   Widget _body(TabController tabController) {
-    return TabBarView(controller: tabController, children: <Widget>[
-      Container(child: WorksheetsPage(showDone: false)),
-      Container(child: WorksheetsPage(showDone: true))
-    ]);
+    if (_searching) {
+      return Container(child: DynamicWorksheetsView(searchFilterProvider));
+    } else {
+      return TabBarView(controller: tabController, children: <Widget>[
+        Container(child: WorksheetsPage(WorksheetFilter())),
+        Container(child: WorksheetsPage(WorksheetFilter(includeStarred: FilterMode.OnlyYes)))
+      ]);
+    }
   }
 
   Widget _bottomBar() {
@@ -177,9 +191,9 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   List<Widget> _appBarActions(BuildContext context) {
     return [
       PopupMenuButton<String>(
-        onSelected: (value) => _moreButtonPressed(value),
+        onSelected: (value) => _moreButtonPressed(context, value),
         itemBuilder: (BuildContext context) {
-          return {'Share all', 'About'}.map((String choice) {
+          return {'Share All', 'Show Archive', 'About'}.map((String choice) {
             return PopupMenuItem<String>(
               value: choice,
               child: Text(choice),
@@ -197,11 +211,16 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     ];
   }
 
-  Future<void> _moreButtonPressed(String item) async {
+  Future<void> _moreButtonPressed(BuildContext context, String item) async {
     switch (item) {
-      case "Share all":
+      case "Share All":
         {
           _shareWorksheets();
+        }
+        break;
+      case "Show Archive":
+        {
+          _showArchive(context);
         }
         break;
       case "About":
@@ -244,6 +263,14 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     Share.share(result);
   }
 
+  Future<void> _showArchive(BuildContext ctx) async {
+    Navigator.push(
+        ctx,
+        MaterialPageRoute(
+            builder: (ctx) =>
+                WorksheetFilterViewPage(WorksheetFilter(includeArchived: FilterMode.OnlyYes), "Archive")));
+  }
+
   Future<void> _onOpen(LinkableElement link) async {
     if (await canLaunch(link.url)) {
       await launch(link.url);
@@ -256,13 +283,12 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     switch (event.type) {
       case WorksheetEventType.Added:
       case WorksheetEventType.Modified:
+      case WorksheetEventType.Archived:
+      case WorksheetEventType.UnArchived:
         {
           final ws = event.worksheet!;
-          _tabController.index = ws.isComplete ? 1 : 0;
+          _tabController.index = ws.isStarred ? 1 : 0;
         }
-        break;
-      case WorksheetEventType.Searching:
-        _tabController.index = 0;
         break;
       default:
     }

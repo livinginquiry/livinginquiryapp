@@ -3,18 +3,24 @@ import 'package:flutter/material.dart';
 import '../models/util.dart';
 import 'color_slider.dart';
 
-enum moreOptions { delete, share, copy }
+enum moreOptions { archive, unarchive, delete, share, copy }
 
 class OptionsSheet extends StatefulWidget {
   final Color color;
   final DateTime? lastModified;
+  final bool isArchived;
   final Future<void> Function(Color) callBackColorTapped;
 
-  final void Function(moreOptions)? callBackOptionTapped;
-
   const OptionsSheet(
-      {Key? key, required this.color, this.lastModified, required this.callBackColorTapped, this.callBackOptionTapped})
+      {Key? key,
+      required this.color,
+      required this.isArchived,
+      this.lastModified,
+      required this.callBackColorTapped,
+      this.callBackOptionTapped})
       : super(key: key);
+
+  final void Function(moreOptions)? callBackOptionTapped;
 
   @override
   _OptionsSheetState createState() => _OptionsSheetState();
@@ -35,6 +41,13 @@ class _OptionsSheetState extends State<OptionsSheet> {
       color: Colors.white,
       child: new Wrap(
         children: <Widget>[
+          new ListTile(
+              leading: new Icon(widget.isArchived ? Icons.unarchive : Icons.archive),
+              title: new Text(widget.isArchived ? 'Un-Archive' : 'Archive'),
+              onTap: () {
+                Navigator.of(context).pop();
+                widget.callBackOptionTapped!(widget.isArchived ? moreOptions.unarchive : moreOptions.archive);
+              }),
           new ListTile(
               leading: new Icon(Icons.delete),
               title: new Text('Delete permanently'),

@@ -1,5 +1,3 @@
-// import 'dart:async';
-
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -7,78 +5,12 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:path/path.dart';
+import 'package:livinginquiryapp/providers/worksheet_db.dart';
+import 'package:quiver/collection.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:tuple/tuple.dart';
 import 'package:yaml/yaml.dart';
 
 import '../models/worksheet.dart';
-
-class WorksheetDb {
-  final databaseName = "notes.db";
-  final tableName = "notes";
-  static const migrationScripts = [
-    'alter table notes add column is_complete integer default 0;',
-    "alter table notes add column parent_id integer default -1;",
-    "create index idx_notes_parent_id on notes (parent_id);",
-    "alter table notes add column tags text;"
-  ];
-
-  final fieldMap = {
-    "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
-    "title": "BLOB",
-    "content": "BLOB",
-    "date_created": "INTEGER",
-    "date_last_edited": "INTEGER",
-    "note_color": "INTEGER",
-    "is_archived": "INTEGER",
-    "is_complete": "INTEGER",
-    "parent_id": "INTEGER DEFAULT -1",
-    "tags": "TEXT"
-  };
-
-  Database? _database;
-
-  Future<Database> get database async => _database ??= await initDB();
-
-  deleteDb() async {
-    var path = await getDatabasesPath();
-    await deleteDatabase(path);
-  }
-
-  initDB() async {
-    var path = await getDatabasesPath();
-    var dbPath = join(path, 'notes.db');
-    // ignore: argument_type_not_assignable
-    Database dbConnection = await openDatabase(dbPath, version: 5, onCreate: (Database db, int version) async {
-      print("executing create query from onCreate callback: ${_buildCreateQuery()}");
-      await db.execute(_buildCreateQuery());
-    }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
-      print("upgrading from $oldVersion to $newVersion");
-      for (var i = oldVersion - 1; i < newVersion - 1; i++) {
-        await db.execute(migrationScripts[i]);
-      }
-    });
-
-    await dbConnection.execute(_buildCreateQuery());
-    return dbConnection;
-  }
-
-// build the create query dynamically using the column:field dictionary.
-  String _buildCreateQuery() {
-    String query = "CREATE TABLE IF NOT EXISTS ";
-    query += tableName;
-    query += "(";
-    fieldMap.forEach((column, field) {
-      query += "$column $field,";
-    });
-
-    query = query.substring(0, query.length - 1);
-    query += " )";
-
-    return query;
-  }
-}
 
 final worksheetDb = Provider<WorksheetDb>((ref) => WorksheetDb());
 final worksheetDbProvider = FutureProvider.autoDispose<Database>((ref) async {
@@ -88,12 +20,19 @@ final worksheetDbProvider = FutureProvider.autoDispose<Database>((ref) async {
 final worksheetNotifierProvider =
     AsyncNotifierProvider.autoDispose<WorksheetNotifier, WorksheetPayload>(WorksheetNotifier.new);
 
+final staticallyFilteredWorksheetProvider = AsyncNotifierProvider.autoDispose
+    .family<WorksheetStaticFilterNotifier, WorksheetPayload, WorksheetFilter>(() => WorksheetStaticFilterNotifier());
+
+final dynamicallyFilteredWorksheetProvider = AsyncNotifierProvider.autoDispose
+    .family<WorksheetDynamicFilterNotifier, WorksheetPayload, StateProvider<WorksheetFilter?>>(
+        () => WorksheetDynamicFilterNotifier());
+
 final worksheetTypeProvider = Provider<WorksheetTypeRepository>((ref) => WorksheetTypeRepository());
 final worksheetRepoProvider = Provider<WorksheetRepository>((ref) => WorksheetRepository(ref));
 final stopWordsProvider = Provider<StopWordsRepository>((ref) => StopWordsRepository());
 
 class WorksheetEventNotifier extends StateNotifier<WorksheetEvent> {
-  WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default, List.empty()));
+  WorksheetEventNotifier() : super(WorksheetEvent(WorksheetEventType.Default));
 }
 
 final worksheetEventProvider =
@@ -103,31 +42,120 @@ final childWorksheetsProvider = FutureProvider.autoDispose.family<List<Worksheet
   final repo = ref.watch(worksheetRepoProvider);
   return repo.getChildWorksheets(id);
 });
+//
+// final childWorksheetsProvider = AsyncNotifierProvider.autoDispose
+//     .family<ChildWorksheetNotifier, List<Worksheet>, int>(
+//         () => ChildWorksheetNotifier());
+
+enum FilterMode { Yes, No, OnlyYes }
+
+final searchFilterProvider = StateProvider<WorksheetFilter?>((ref) => null);
 
 class WorksheetFilter {
-  final bool includeDone;
-  final bool includeArchived;
+  final FilterMode includeStarred;
+  final FilterMode includeArchived;
+  final FilterMode includeChildren;
+
   final bool shouldRefresh;
   final String? query;
-  WorksheetFilter(this.includeDone, {this.includeArchived = false, this.shouldRefresh = true, this.query});
+  final splitPattern = new RegExp(r"[,\s]");
+
+  WorksheetFilter(
+      {this.includeStarred = FilterMode.Yes,
+      this.includeArchived = FilterMode.No,
+      this.includeChildren = FilterMode.No,
+      this.shouldRefresh = true,
+      this.query});
+
+  WorksheetFilter copyWith(
+      {FilterMode? includeStarred,
+      FilterMode? includeArchived,
+      FilterMode? includeChildren,
+      bool? shouldRefresh,
+      String? query}) {
+    return WorksheetFilter(
+      includeStarred: includeStarred ?? this.includeStarred,
+      includeArchived: includeArchived ?? this.includeArchived,
+      includeChildren: includeChildren ?? this.includeChildren,
+      shouldRefresh: shouldRefresh ?? this.shouldRefresh,
+      query: query ?? this.query,
+    );
+  }
+
+  bool isSearch() {
+    return query != null;
+  }
+
+  Set<String> getSearchTerms(Set<String> stopWords) {
+    return query == null
+        ? <String>{}
+        : query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w) && w.isNotEmpty).toSet();
+  }
+
+  bool apply(Worksheet worksheet, Set<String>? searchTerms) {
+    if ((includeArchived == FilterMode.No && worksheet.isArchived) ||
+        (includeArchived == FilterMode.OnlyYes && !worksheet.isArchived)) {
+      return false;
+    }
+
+    if ((includeStarred == FilterMode.No && worksheet.isStarred) ||
+        (includeStarred == FilterMode.OnlyYes && !worksheet.isStarred)) {
+      return false;
+    }
+
+    if ((includeChildren == FilterMode.No && worksheet.hasParent) ||
+        (includeChildren == FilterMode.OnlyYes && !worksheet.hasParent)) {
+      return false;
+    }
+
+    if (query == null) {
+      //not searching so just return true
+      return true;
+    }
+
+    if (searchTerms?.isEmpty ?? true) {
+      // we're searching but no terms were supplied so return false to indicate no matches
+      return false;
+    } else {
+      final commonTags = worksheet.tags?.isEmpty ?? true
+          ? <String>{}
+          : searchTerms!.intersection(worksheet.tags!.map((s) => s.toLowerCase()).toSet());
+
+      // all the words not matched by tags in this worksheet
+      final remaining = Set.from(searchTerms!.difference(commonTags));
+      final answers = worksheet.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
+
+      // of the remaining words, find the first NOT included in the worksheet text
+      final notFound =
+          remaining.firstWhereOrNull((word) => answers.firstWhereOrNull((answer) => answer.contains(word)) == null);
+
+      return notFound == null;
+    }
+  }
+
+  List<Worksheet> applyAll(List<Worksheet> worksheets, Set<String> stopWords) {
+    final searchTerms = getSearchTerms(stopWords);
+    return worksheets.where((ws) => apply(ws, searchTerms)).toList(growable: false);
+  }
 
   bool operator ==(o) =>
       o is WorksheetFilter &&
-      o.includeDone == includeDone &&
+      o.includeStarred == includeStarred &&
       o.includeArchived == includeArchived &&
+      o.includeChildren == includeChildren &&
       o.shouldRefresh == shouldRefresh &&
       o.query == query;
 
   @override
-  int get hashCode => Object.hash(includeDone, includeArchived, shouldRefresh, query);
+  int get hashCode => Object.hash(includeStarred, includeArchived, includeChildren, shouldRefresh, query);
 
   @override
   String toString() {
-    return "WorksheetFilter(includeDone: $includeDone, includeArchived: $includeArchived, shouldRefresh: $shouldRefresh, query: $query)";
+    return "WorksheetFilter(includeStarred: $includeStarred, "
+        "includeArchived: $includeArchived, includeChildren: $includeChildren, "
+        "shouldRefresh: $shouldRefresh, query: $query)";
   }
 }
-
-final filterProvider = StateProvider((ref) => WorksheetFilter(false));
 
 class WorksheetRepository {
   LinkedHashMap<int, Worksheet>? _cache;
@@ -148,14 +176,17 @@ class WorksheetRepository {
     return result;
   }
 
-  Future<void> archiveWorksheet(Worksheet worksheet) async {
+  Future<void> archiveWorksheet(Worksheet worksheet, {bool archive = true}) async {
     if (worksheet.id != -1) {
       final db = await ref.read(worksheetDbProvider.future);
 
-      int? idToUpdate = worksheet.id;
-
+      int idToUpdate = worksheet.id;
+      worksheet.dateLastEdited = DateTime.now();
+      worksheet.isArchived = archive;
       final result = await db.update("notes", worksheet.toMap(true), where: "id = ?", whereArgs: [idToUpdate]);
       if (result > 0) {
+        final children = await getChildWorksheets(idToUpdate);
+        Future.wait(children.whereNot((ws) => ws.id == idToUpdate).map((ws) => archiveWorksheet(ws, archive: archive)));
         _cache = null;
       }
     } else {
@@ -214,7 +245,20 @@ class WorksheetRepository {
     final db = await ref.read(worksheetDbProvider.future);
     final res =
         await db.query("notes", where: "parent_id = ? or id = ?", whereArgs: [id, id], orderBy: "date_created desc");
-    return res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).toList() : [];
+    final worksheets = res.isNotEmpty ? res.map((worksheet) => Worksheet.fromJson(worksheet)).toList() : <Worksheet>[];
+    if (worksheets.isNotEmpty) {
+      Worksheet? parent;
+      final childIds = <int>{};
+      worksheets.forEach((ws) {
+        if (ws.id == id) {
+          parent = ws;
+        } else {
+          childIds.add(ws.id);
+        }
+      });
+      parent?.childIds = childIds.isEmpty ? null : childIds;
+    }
+    return worksheets;
   }
 
   Future<int> updateChildren(int id) async {
@@ -228,14 +272,13 @@ class WorksheetRepository {
   }
 }
 
-enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, Deleted, Searching }
+enum WorksheetEventType { Default, Reloaded, Added, Modified, Archived, UnArchived, Deleted, Searching }
 
 class WorksheetEvent {
-  WorksheetEvent(this.type, this.worksheets, {this.worksheet, this.worksheetId}) : this.timestamp = DateTime.now();
+  WorksheetEvent(this.type, {this.worksheet, this.worksheetId}) : this.timestamp = DateTime.now();
   final DateTime timestamp;
   final WorksheetEventType type;
   final Worksheet? worksheet;
-  final List<Worksheet> worksheets;
   final int? worksheetId;
 
   bool operator ==(o) => o is WorksheetEvent && o.type == type && o.timestamp == timestamp;
@@ -244,7 +287,7 @@ class WorksheetEvent {
 
   @override
   String toString() {
-    return "WorksheetEvent(type: $type, timestamp: $timestamp, worksheet: $worksheet, worksheets: $worksheets, worksheetId: $worksheetId)";
+    return "WorksheetEvent(type: $type, timestamp: $timestamp, worksheet: $worksheet, worksheetId: $worksheetId)";
   }
 }
 
@@ -267,40 +310,42 @@ class WorksheetPayload {
 class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
   @override
   FutureOr<WorksheetPayload> build() async {
-    final filter = ref.watch(filterProvider);
-    WorksheetPayload? oldValue = state.value;
+    return _buildPayload();
+  }
+
+  Future<WorksheetPayload> _buildPayload(
+      {WorksheetEventType eventType = WorksheetEventType.Reloaded, Worksheet? worksheet, int? worksheetId}) async {
     state = const AsyncLoading();
     final repo = ref.watch(worksheetRepoProvider);
     final results = await repo.getWorksheets();
-    final stopWords = await ref.watch(stopWordsProvider).getStopWords();
-    final filteredResults = applyFilter(filter, results, stopWords);
-    final isSearching = filter.query != null;
+    final parentMap = results.fold(ListMultimap<int, int>(), (acc, ws) {
+      if (ws.hasParent) {
+        acc.add(ws.parentId, ws.id);
+      }
+      return acc;
+    });
+
+    results.forEach((ws) {
+      ws.childIds = parentMap[ws.id].isEmpty ? null : parentMap[ws.id].toSet();
+    });
 
     final provider = ref.read(worksheetEventProvider.notifier);
-    WorksheetEvent event =
-        WorksheetEvent(isSearching ? WorksheetEventType.Searching : WorksheetEventType.Reloaded, filteredResults);
+    WorksheetEvent event = WorksheetEvent(eventType, worksheet: worksheet, worksheetId: worksheetId);
     provider.state = event;
-
-    return WorksheetPayload(filteredResults, event);
+    return WorksheetPayload(results, event);
   }
 
   Future<int> addWorksheet(Worksheet worksheet) async {
     final repo = ref.watch(worksheetRepoProvider);
-    state = const AsyncLoading();
     worksheet.dateLastEdited = DateTime.now();
     final res = await repo.addWorksheet(worksheet);
     if (res > 0) {
-      final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
       final cloned = Worksheet.clone(worksheet);
       cloned.id = res;
-      asyncWorksheets.whenData((worksheets) {
-        final provider = ref.read(worksheetEventProvider.notifier);
-        final event = WorksheetEvent(
-            worksheet.id == -1 ? WorksheetEventType.Added : WorksheetEventType.Modified, worksheets,
-            worksheet: cloned, worksheetId: cloned.id);
-        provider.state = event;
-        state = AsyncValue.data(WorksheetPayload(worksheets, event));
-      });
+      state = await AsyncValue.guard(() => _buildPayload(
+          eventType: worksheet.id == -1 ? WorksheetEventType.Added : WorksheetEventType.Modified,
+          worksheetId: worksheet.id,
+          worksheet: cloned));
     } else {
       throw new WorksheetDbException("Worksheet couldn't be added!");
     }
@@ -309,7 +354,6 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
 
   Future<void> deleteWorksheet(int id) async {
     final repo = ref.watch(worksheetRepoProvider);
-    state = const AsyncLoading();
     final ws = await repo.getWorksheet(id);
     if (ws == null) {
       print("Worksheet $id not found!");
@@ -319,31 +363,20 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
 
     if (res == 1) {
       await repo.updateChildren(id);
-      final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
-      asyncWorksheets.whenData((worksheets) async {
-        final provider = ref.read(worksheetEventProvider.notifier);
-        final event = WorksheetEvent(WorksheetEventType.Deleted, worksheets, worksheetId: id);
-        provider.state = event;
-        state = AsyncValue.data(WorksheetPayload(worksheets, event));
-      });
+      state = await AsyncValue.guard(() => _buildPayload(eventType: WorksheetEventType.Deleted, worksheetId: id));
     } else {
       final exception = new WorksheetDbException("Worksheet $id couldn't be deleted!");
       state = AsyncError(exception, StackTrace.current);
     }
   }
 
-  Future<void> archiveWorksheet(Worksheet worksheet) async {
+  Future<void> archiveWorksheet(Worksheet worksheet, {bool archive = true}) async {
     final repo = ref.watch(worksheetRepoProvider);
-    state = const AsyncLoading();
-    await repo.archiveWorksheet(worksheet);
-    final asyncWorksheets = await AsyncValue.guard(repo.getWorksheets);
-    asyncWorksheets.whenData((worksheets) {
-      final provider = ref.read(worksheetEventProvider.notifier);
-      final event =
-          WorksheetEvent(WorksheetEventType.Archived, worksheets, worksheet: worksheet, worksheetId: worksheet.id);
-      provider.state = event;
-      state = AsyncValue.data(WorksheetPayload(worksheets, event));
-    });
+    await repo.archiveWorksheet(worksheet, archive: archive);
+    state = await AsyncValue.guard(() => _buildPayload(
+        eventType: archive ? WorksheetEventType.Archived : WorksheetEventType.UnArchived,
+        worksheet: worksheet,
+        worksheetId: worksheet.id));
   }
 
   List<Worksheet>? getCachedChildren(int id) {
@@ -359,46 +392,42 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
   }
 }
 
-final splitPattern = new RegExp(r"[,\s]");
-List<Worksheet> applyFilter(WorksheetFilter filter, List<Worksheet> worksheets, Set<String> stopWords) {
-  final base =
-      worksheets.where((w) => (filter.includeArchived || !w.isArchived) && (filter.includeDone || !w.isComplete));
-
-  if (filter.query == null) {
-    return base.toList();
-  } else {
-    final searchTerms = filter.query!
-        .split(splitPattern)
-        .map((s) => s.trim())
-        .where((w) => !stopWords.contains(w) && w.isNotEmpty)
-        .toSet();
-    if (searchTerms.isEmpty) {
-      return <Worksheet>[];
-    }
-    List<Worksheet> matched = [];
-    base
-        .map((w) => Tuple2(
-            w,
-            w.tags?.isEmpty ?? true
-                ? <String>{}
-                : searchTerms.intersection(w.tags!.map((s) => s.toLowerCase()).toSet())))
-        .forEach((t) {
-      // all the words not matched by tags in this worksheet
-      final remaining = Set.from(searchTerms.difference(t.item2));
-      final answers = t.item1.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
-
-      // of the remaining words, find the first NOT included in the worksheet text
-      final notFound =
-          remaining.firstWhereOrNull((word) => answers.firstWhereOrNull((answer) => answer.contains(word)) == null);
-
-      // all matched
-      if (notFound == null) {
-        matched.add(t.item1);
-      }
-    });
-    return matched;
+abstract class WorksheetFilterNotifier<Arg> extends AutoDisposeFamilyAsyncNotifier<WorksheetPayload, Arg> {
+  Future<WorksheetPayload> getFilteredResults(WorksheetFilter filter) async {
+    final payload = await ref.watch(worksheetNotifierProvider.future);
+    final stopWords = await ref.watch(stopWordsProvider).getStopWords();
+    final worksheets = payload.worksheets;
+    final filteredResults = filter.applyAll(worksheets, stopWords);
+    final isSearching = filter.isSearch();
+    WorksheetEvent event = WorksheetEvent(isSearching ? WorksheetEventType.Searching : WorksheetEventType.Reloaded);
+    return WorksheetPayload(filteredResults, event);
   }
 }
+
+class WorksheetStaticFilterNotifier extends WorksheetFilterNotifier<WorksheetFilter> {
+  @override
+  FutureOr<WorksheetPayload> build(WorksheetFilter filter) async {
+    return getFilteredResults(filter);
+  }
+}
+
+class WorksheetDynamicFilterNotifier extends WorksheetFilterNotifier<StateProvider<WorksheetFilter?>> {
+  @override
+  FutureOr<WorksheetPayload> build(StateProvider<WorksheetFilter?> filterProvider) async {
+    final filter = ref.watch(filterProvider);
+    if (filter == null) {
+      return WorksheetPayload(<Worksheet>[], WorksheetEvent(WorksheetEventType.Default));
+    }
+    return getFilteredResults(filter);
+  }
+}
+//
+// class ChildWorksheetNotifier extends AutoDisposeFamilyAsyncNotifier<List<Worksheet>, int> {
+//   @override
+//   FutureOr<List<Worksheet>> build(int id) async {
+//
+//   }
+// }
 
 class WorksheetDbException implements Exception {
   final String cause;
