@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -7,6 +8,7 @@ import 'package:livinginquiryapp/widgets/app_bar.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/dev_utils.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
@@ -151,7 +153,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  SpeedDialChild _profileOption({Function? onPressed, required String label}) {
+  SpeedDialChild _createWorksheetSpeedDialOptions({Function? onPressed, required String label}) {
     final labelWidget = Container(
       padding: EdgeInsets.symmetric(vertical: 9.0, horizontal: 14.0),
       margin: EdgeInsetsDirectional.zero,
@@ -173,7 +175,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     var provider = ref.read(worksheetTypeProvider);
     await provider.getInquiryTypes().then(
         (value) => value?.forEach((k, v) {
-              children.add(_profileOption(onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
+              children.add(_createWorksheetSpeedDialOptions(
+                  onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
             }),
         onError: (err) => print("Caught error while loading inquiry types! $err"));
     return children;
@@ -208,7 +211,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       PopupMenuButton<String>(
         onSelected: (value) => _moreButtonPressed(context, value),
         itemBuilder: (BuildContext context) {
-          return {'Share All', 'Show Archive', 'About'}.map((String choice) {
+          return {'Share All', 'Show Archive', 'About', if (kDebugMode) 'Dev Options'}.map((String choice) {
             return PopupMenuItem<String>(
               value: choice,
               child: Text(choice),
@@ -242,8 +245,12 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
         {
           _showAboutDialog();
         }
+        break;
+      case "Dev Options":
+        {
+          _showDevOptions();
+        }
     }
-    ;
   }
 
   void _showAboutDialog() {
@@ -266,6 +273,83 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
             ))
       ],
     );
+  }
+
+  Future<void> _showDevOptions() async {
+    switch (await showDialog<DevOptions>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: const Text('Dev Options'),
+            children: <Widget>[
+              SimpleDialogOption(
+                onPressed: () async {
+                  await _clearWorksheets();
+                },
+                child: const Text('Clear Worksheets'),
+              ),
+              SimpleDialogOption(
+                onPressed: () async {
+                  await _loadTestData();
+                },
+                child: const Text('Load Test Data'),
+              ),
+              SimpleDialogOption(
+                onPressed: () async {
+                  await _exportJson();
+                },
+                child: const Text('Export Json'),
+              ),
+            ],
+          );
+        })) {
+      case DevOptions.clearData:
+        print("Clear Data!!");
+        break;
+      case DevOptions.loadTestData:
+        print("Load Test Data!");
+        break;
+      case DevOptions.exportJson:
+        print("Export Json!");
+        break;
+      case null:
+        print("dialog dismissed...");
+        break;
+    }
+  }
+
+  Future<bool> _clearWorksheets() async {
+    final confirmed = await confirmationDialog(context, "Clear Worksheets?",
+        "Are you sure you want to clear all worksheet data?  This operation cannot be undone.");
+    if (confirmed) {
+      print("should delete now!");
+      final db = ref.read(worksheetNotifierProvider.notifier);
+      await db.clearWorksheets();
+    }
+
+    return confirmed;
+  }
+
+  Future<bool> _loadTestData() async {
+    final confirmed = await confirmationDialog(context, "Load Test Data?",
+        "Are you sure you want to load worksheet test data?  This operation cannot be undone.");
+    if (confirmed) {
+      final repo = ref.watch(worksheetRepoProvider);
+      final provider = ref.read(worksheetTypeProvider);
+      final typeMap = await provider.getInquiryTypes();
+
+      await generateWorksheets(repo, 300, typeMap?.values.toList() ?? <WorksheetContent>[]);
+      final db = ref.read(worksheetNotifierProvider.notifier);
+      await db.triggerReload();
+    }
+
+    return confirmed;
+  }
+
+  Future<void> _exportJson() async {
+    final repo = ref.watch(worksheetRepoProvider);
+    final json = await repo.getWorksheetsAsJson();
+    Share.share(json);
   }
 
   Future<void> _shareWorksheets() async {

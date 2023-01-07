@@ -3,15 +3,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/models/theme.dart';
 import 'package:livinginquiryapp/providers/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
-  runApp(ProviderScope(overrides: [
-    sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-  ], child: MyApp()));
+  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(sharedPreferences)], child: MyApp()));
 }
 
 class MyApp extends HookConsumerWidget {

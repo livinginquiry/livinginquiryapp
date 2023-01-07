@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/providers/worksheet_db.dart';
@@ -173,6 +175,7 @@ class WorksheetRepository {
     if (result > 0) {
       _cache = null;
     }
+    worksheet.id = result;
     return result;
   }
 
@@ -200,6 +203,13 @@ class WorksheetRepository {
     if (result > 0) {
       _cache?.remove(id);
     }
+    return result;
+  }
+
+  Future<int> clearWorksheets() async {
+    final db = await ref.read(worksheetDbProvider.future);
+    final result = await db.delete("notes");
+    _cache = null;
     return result;
   }
 
@@ -235,6 +245,12 @@ class WorksheetRepository {
       _cache = cache;
       return result;
     }
+  }
+
+  Future<String> getWorksheetsAsJson() async {
+    final db = await ref.read(worksheetDbProvider.future);
+    var res = await db.query("notes", orderBy: "date_created desc");
+    return jsonEncode(res);
   }
 
   bool hasCache() {
@@ -366,6 +382,21 @@ class WorksheetNotifier extends AutoDisposeAsyncNotifier<WorksheetPayload> {
       state = await AsyncValue.guard(() => _buildPayload(eventType: WorksheetEventType.Deleted, worksheetId: id));
     } else {
       final exception = new WorksheetDbException("Worksheet $id couldn't be deleted!");
+      state = AsyncError(exception, StackTrace.current);
+    }
+  }
+
+  Future<void> triggerReload() async {
+    state = await AsyncValue.guard(() => _buildPayload());
+  }
+
+  Future<void> clearWorksheets() async {
+    final repo = ref.watch(worksheetRepoProvider);
+    final res = await repo.clearWorksheets();
+    if (res > 0) {
+      state = await AsyncValue.guard(() => _buildPayload());
+    } else {
+      final exception = new WorksheetDbException("Worksheets couldn't be deleted!");
       state = AsyncError(exception, StackTrace.current);
     }
   }

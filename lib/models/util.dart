@@ -126,3 +126,33 @@ String worksheetBucketToString(WorksheetBucket bucket, DateTime dt) {
       return dt.year.toString();
   }
 }
+
+Future<bool> confirmationDialog(BuildContext context, String title, String message) async {
+  final res = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Confirm'),
+            onPressed: () {
+              print('Confirmed');
+              Navigator.pop(context, true);
+            },
+          ),
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              print("cancelled");
+              Navigator.pop(context, false);
+            },
+          ),
+        ],
+      );
+    },
+  );
+  return res ?? false;
+}

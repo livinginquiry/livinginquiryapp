@@ -12,9 +12,7 @@ final prefsUtilProvider = Provider<PrefsUtil>((ref) {
 });
 
 class PrefsUtil {
-  PrefsUtil({
-    required this.sharedPreferences,
-  });
+  PrefsUtil({required this.sharedPreferences});
 
   final SharedPreferences sharedPreferences;
 
