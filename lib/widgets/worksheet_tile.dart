@@ -22,10 +22,12 @@ class WorksheetTile extends StatelessWidget {
         child: ListTile(
           dense: false,
           title: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-            Text(
+            Flexible(
+                child: Text(
               title,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            )),
             worksheet.isStarred && showStatusIcons
                 ? new IconTheme(data: new IconThemeData(color: Colors.deepOrange), child: new Icon(Icons.star))
                 : SizedBox.shrink(),
@@ -46,7 +48,7 @@ class WorksheetTile extends StatelessWidget {
                     children: [
                       numChildren <= 0
                           ? SizedBox.shrink()
-                          : Transform.translate(offset: Offset(0, -10), child: _getIcon())
+                          : Transform.translate(offset: Offset(0, 0), child: _getIcon())
                     ]),
                 Row(
                     mainAxisAlignment: MainAxisAlignment.end,

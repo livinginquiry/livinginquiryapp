@@ -62,7 +62,7 @@ class _DynamicWorksheetsViewState extends ConsumerState<DynamicWorksheetsView>
                             ),
                           ),
                           itemComparator: (ws1, ws2) => -ws1.dateCreated.compareTo(ws2.dateCreated),
-                          useStickyGroupSeparators: true,
+                          useStickyGroupSeparators: false,
                           floatingHeader: false,
                           separator: SizedBox(height: 2),
                           order: GroupedListOrder.ASC,
