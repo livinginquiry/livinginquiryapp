@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class ChipTags extends StatefulWidget {
-  const ChipTags(
+  const ChipTags(this.formKey,
       {Key? key,
       this.iconColor,
       this.chipColor,
       this.textColor,
       this.decoration,
       this.keyboardType,
-      this.createTagOnSubmit = false,
       this.suggestions,
       required this.tags,
       required this.onChanged,
       this.autocorrect = false,
-      this.stopWords})
+      this.stopWords,
+      this.focusNode,
+      this.textEditingController})
       : super(key: key);
 
   ///remove icon Color
@@ -36,13 +37,15 @@ class ChipTags extends StatefulWidget {
 
   final Set<String> tags;
 
-  final bool createTagOnSubmit;
-
   final bool autocorrect;
 
-  final void Function() onChanged;
+  final void Function(Set<String>) onChanged;
 
   final Set<String>? stopWords;
+
+  final TextEditingController? textEditingController;
+  final FocusNode? focusNode;
+  final GlobalKey<FormBuilderState> formKey;
 
   @override
   _ChipTagsState createState() => _ChipTagsState();
@@ -50,30 +53,30 @@ class ChipTags extends StatefulWidget {
 
 class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin {
   late final RegExp splitPattern;
+  late final GlobalKey<FormBuilderState> _formKey;
+  late final FocusNode _fieldFocusNode;
+  late final TextEditingController _typeAheadController;
   @override
   void initState() {
     super.initState();
     splitPattern = new RegExp(r"[,\s]");
+    _formKey = widget.formKey;
+    _fieldFocusNode = widget.focusNode ?? FocusNode();
+    _typeAheadController = widget.textEditingController ?? TextEditingController();
   }
 
-  ///Form key for TextField
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _typeAheadController = TextEditingController();
-  final FocusNode _fieldFocusNode = FocusNode();
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.max,
       children: <Widget>[
-        Form(
-          key: _formKey,
-          child: TypeAheadFormField(
-            direction: AxisDirection.up,
-            hideOnEmpty: true,
-            minCharsForSuggestions: 1,
-            hideKeyboard: false,
-            // autoFlipDirection: true,
-            textFieldConfiguration: TextFieldConfiguration(
+        TypeAheadFormField(
+          direction: AxisDirection.down,
+          hideOnEmpty: true,
+          minCharsForSuggestions: 1,
+          hideKeyboard: false,
+          autoFlipDirection: true,
+          textFieldConfiguration: TextFieldConfiguration(
               controller: _typeAheadController,
               focusNode: _fieldFocusNode,
               autocorrect: widget.autocorrect,
@@ -87,68 +90,45 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
                   ),
               keyboardType: widget.keyboardType ?? TextInputType.text,
               textInputAction: TextInputAction.done,
-              onSubmitted: widget.createTagOnSubmit
-                  ? (value) {
-                      final tags = _extractTags(value);
-                      if (tags.isNotEmpty) {
-                        widget.tags.addAll(tags);
-
-                        _typeAheadController.clear();
-
-                        ///reset form
-                        _formKey.currentState!.reset();
-
-                        _fieldFocusNode.requestFocus();
-                        widget.onChanged();
-                      }
-                    }
-                  : null,
-              onChanged: widget.createTagOnSubmit
-                  ? null
-                  : (value) {
-                      final tags = _extractTags(value);
-                      if (tags.isNotEmpty) {
-                        widget.tags.addAll(tags);
-
-                        _typeAheadController.clear();
-
-                        _formKey.currentState!.reset();
-
-                        widget.onChanged();
-                      }
-                    },
-            ),
-            suggestionsCallback: (pattern) {
-              return widget.suggestions!
-                  .where(
-                      (String tag) => tag.toLowerCase().startsWith(pattern.toLowerCase()) && !widget.tags.contains(tag))
-                  .toList();
-            },
-            itemBuilder: (context, suggestion) {
-              return ListTile(
-                title: Text(suggestion),
-              );
-            },
-            transitionBuilder: (context, suggestionsBox, controller) {
-              return suggestionsBox;
-            },
-            onSuggestionSelected: (suggestion) {
-              widget.tags.add(suggestion);
-
-              ///reset form
-              _formKey.currentState!.reset();
-
-              // clear controller AFTER resetting to prevent unbidden reappearance
-              _typeAheadController.clear();
-              widget.onChanged();
-            },
-            onSaved: (value) {},
-          ),
+              onSubmitted: (value) {
+                final tags = _extractTags(value);
+                if (tags.isNotEmpty) {
+                  widget.tags.addAll(tags);
+                  _commitTags();
+                }
+              }),
+          suggestionsCallback: (pattern) {
+            return widget.suggestions!
+                .where(
+                    (String tag) => tag.toLowerCase().startsWith(pattern.toLowerCase()) && !widget.tags.contains(tag))
+                .toList();
+          },
+          itemBuilder: (context, suggestion) {
+            return ListTile(
+              title: Text(suggestion),
+            );
+          },
+          transitionBuilder: (context, suggestionsBox, controller) {
+            return suggestionsBox;
+          },
+          onSuggestionSelected: (suggestion) {
+            widget.tags.add(suggestion);
+            _commitTags();
+          },
+          onSaved: (value) {},
         ),
         SizedBox(height: 5),
         _chipListPreview()
       ],
     );
+  }
+
+  void _commitTags() {
+    _formKey.currentState!.save();
+    _typeAheadController.clear();
+
+    _fieldFocusNode.requestFocus();
+    widget.onChanged(widget.tags);
   }
 
   Set<String> _extractTags(String value) {
@@ -178,7 +158,7 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
                 avatar: Icon(Icons.remove_circle_outline, color: widget.iconColor ?? Colors.white),
                 onSelected: (value) {
                   widget.tags.remove(text);
-                  widget.onChanged();
+                  widget.onChanged(widget.tags);
                 },
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,

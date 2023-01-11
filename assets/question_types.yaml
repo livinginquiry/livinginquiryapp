@@ -1,66 +1,78 @@
-open_mic:
-  display_name: Open Note
-  questions:
-    - question: What is it about?
-      type: freeform
-      prompt: ~
-    - question: Notes
-      type: freeform
-      prompt: ~
-one_belief:
-  display_name: One Belief at a Time
-  questions:
-    - question: "Belief:"
-      type: freeform
-      prompt: Write down a stressful thought
-    - question: "Situation:"
-      type: freeform
-      prompt: What was the situation?
-    - question: 1. Is it true?
-      type: multiple
-      prompt: ~
-      values: ["yes", "no"]
-    - question: 2. Can you absolutely know it’s true?
-      type: multiple
-      prompt: ~
-      values: ["yes", "no"]
-    - question: 3. How do you react, what happens, when you believe that thought?
-      type: freeform
-      prompt: ~
-    - question: 4. Who would you be without the thought?
-      type: freeform
-      prompt: ~
-    - question: Turn the thought around.
-      type: freeform
-      prompt: Is the opposite as true or truer?
-    - question: Notes
-      type: freeform
-      prompt: ~
-judge_your_neighbor:
-  display_name: Judge Your Neighbor
-  questions:
-    - question: "Situation:"
-      type: freeform
-      prompt: Think of a stressful situation
-    - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
-      type: freeform
-      prompt: “I'm ____ with ____ because…”
-    - question: 2. In this situation, how do you want this person to change? What do you want them to do?
-      type: freeform
-      prompt: “I want ____ to…”
-    - question: 3. In this situation, what advice would you offer this person?
-      type: freeform
-      prompt: “____ should/shouldn’t…”
-    - question: 4. In order for you to be happy in this situation, what do you need this person to think, say, feel, or do?
-      type: freeform
-      prompt: “I need ____ to…”
-    - question: 5. What do you think of them in this situation? Make a list. (It’s okay to be petty and judgmental.)
-      type: freeform
-      prompt: “____ is…”
-    - question: 6. What is it about this person and situation that you don’t ever want to experience again?
-      type: freeform
-      prompt: “I don’t ever want…”
-    - question: Notes
-      type: freeform
-      prompt: ~
-  children: [one_belief]
+worksheet:
+  version: 0.0.2
+  body:
+    open_mic:
+      display_name: Open Note
+      questions:
+        - question: What is it about?
+          type: freeform
+          prompt: ~
+        - question: Tags
+          type: meta
+          prompt: Enter tags separated by comma or space.
+        - question: Notes
+          type: freeform
+          prompt: ~
+    one_belief:
+      display_name: One Belief at a Time
+      questions:
+        - question: "Belief:"
+          type: freeform
+          prompt: Write down a stressful thought
+        - question: "Situation:"
+          type: freeform
+          prompt: What was the situation?
+        - question: 1. Is it true?
+          type: multiple
+          prompt: ~
+          values: [ "yes", "no" ]
+        - question: 2. Can you absolutely know it’s true?
+          type: multiple
+          prompt: ~
+          values: [ "yes", "no" ]
+        - question: 3. How do you react, what happens, when you believe that thought?
+          type: freeform
+          prompt: ~
+        - question: 4. Who would you be without the thought?
+          type: freeform
+          prompt: ~
+        - question: Turn the thought around.
+          type: freeform
+          prompt: Is the opposite as true or truer?
+        - question: Tags
+          type: meta
+          prompt: Enter tags separated by comma or space.
+        - question: Notes
+          type: freeform
+          prompt: ~
+    judge_your_neighbor:
+      display_name: Judge Your Neighbor
+      questions:
+        - question: "Situation:"
+          type: freeform
+          prompt: Think of a stressful situation
+        - question: 1. In this situation, who angers, confuses, hurts, saddens, or disappoints you, and why?
+          type: freeform
+          prompt: “I'm ____ with ____ because…”
+        - question: 2. In this situation, how do you want this person to change? What do you want them to do?
+          type: freeform
+          prompt: “I want ____ to…”
+        - question: 3. In this situation, what advice would you offer this person?
+          type: freeform
+          prompt: “____ should/shouldn’t…”
+        - question: 4. In order for you to be happy in this situation, what do you need this person to think, say, feel, or do?
+          type: freeform
+          prompt: “I need ____ to…”
+        - question: 5. What do you think of them in this situation? Make a list. (It’s okay to be petty and judgmental.)
+          type: freeform
+          prompt: “____ is…”
+        - question: 6. What is it about this person and situation that you don’t ever want to experience again?
+          type: freeform
+          prompt: “I don’t ever want…”
+        - question: Tags
+          type: meta
+          prompt: Enter tags separated by comma or space.
+        - question: Notes
+          type: freeform
+          prompt: ~
+      children: [ one_belief ]

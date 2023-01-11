@@ -157,7 +157,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                       activeColor: Colors.green,
                     )
                   ]),
-              _buildTags(ctx),
+              // _buildTags(ctx),
               _buildChildButtons(ctx)
             ],
           ),
@@ -179,7 +179,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         ]))));
   }
 
-  Widget _buildTags(BuildContext context) {
+  Widget _buildTags(BuildContext context, TextEditingController controller, FocusNode focusNode) {
     return FutureBuilder(
         future: _stopWords,
         builder: (BuildContext context, AsyncSnapshot<Set<String>> snapshot) {
@@ -189,15 +189,21 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  ChipTags(
-                    tags: _tagList,
-                    createTagOnSubmit: true,
-                    onChanged: () => setState(() {
-                      _worksheet.tags = _tagList;
-                    }),
-                    suggestions: _suggestions,
-                    stopWords: snapshot.data,
-                  ),
+                  FormBuilderField<Set<String>?>(
+                      name: "Tags",
+                      onChanged: (tags) => _worksheet.tags = tags,
+                      builder: (FormFieldState field) {
+                        return ChipTags(_fbKey,
+                            tags: _tagList,
+                            onChanged: (value) => field.didChange(value),
+                            // onChanged: (tags) => setState(() {
+                            //   _worksheet.tags = tags;
+                            // }),
+                            suggestions: _suggestions,
+                            stopWords: snapshot.data,
+                            textEditingController: controller,
+                            focusNode: focusNode);
+                      }),
                 ],
               ),
             );
@@ -470,48 +476,57 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       ));
 
       var formItem;
-
-      if (q.type == QuestionType.multiple) {
-        formItem = FormBuilderRadioGroup(
-          name: q.question,
-          decoration: InputDecoration(labelText: q.prompt),
-          initialValue: q.answer,
-          validator: null,
-          options: q.values!
-              .map((value) => FormBuilderFieldOption(
-                    value: value,
-                  ))
-              .toList(growable: false),
-          onSaved: (dynamic val) => q.answer = val,
-        );
-      } else {
-        final idx = index;
-        final TextStyle currentStyle = Theme.of(context).textTheme.subtitle1!;
-        final item = FormBuilderTextField(
-          style: currentStyle.copyWith(fontSize: (currentStyle.fontSize ?? 16) + 2),
-          maxLines: null,
-          readOnly: false,
-          textCapitalization: TextCapitalization.sentences,
-          inputFormatters: <TextInputFormatter>[_BulletFormatter()],
-          controller: _fieldControllers[idx].item1,
-          autofocus: index == 0 && _isNew, // focus on first field when it's a new worksheet
-          focusNode: _fieldControllers[idx].item2,
-          keyboardType: TextInputType.multiline,
-          textInputAction: TextInputAction.newline,
-          name: q.question,
-          decoration: InputDecoration(labelText: q.prompt),
-          validator: FormBuilderValidators.max(MAXIMUM_CHARS),
-          onSaved: (val) {
-            q.answer = val ?? "";
-          },
-          onSubmitted: (val) {
-            _fieldControllers[idx].item2.unfocus();
-            if (_fieldControllers.length - 1 > idx) {
-              FocusScope.of(context).requestFocus(_fieldControllers[idx + 1].item2);
-            }
-          },
-        );
-        formItem = item;
+      switch (q.type) {
+        case QuestionType.multiple:
+          {
+            formItem = FormBuilderRadioGroup(
+              name: q.question,
+              decoration: InputDecoration(labelText: q.prompt),
+              initialValue: q.answer,
+              validator: null,
+              options: q.values!
+                  .map((value) => FormBuilderFieldOption(
+                        value: value,
+                      ))
+                  .toList(growable: false),
+              onSaved: (dynamic val) => q.answer = val,
+            );
+          }
+          break;
+        case QuestionType.freeform:
+          {
+            final idx = index;
+            final TextStyle currentStyle = Theme.of(context).textTheme.subtitle1!;
+            formItem = FormBuilderTextField(
+              style: currentStyle.copyWith(fontSize: (currentStyle.fontSize ?? 16) + 2),
+              maxLines: null,
+              readOnly: false,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: <TextInputFormatter>[_BulletFormatter()],
+              controller: _fieldControllers[idx].item1,
+              autofocus: index == 0 && _isNew, // focus on first field when it's a new worksheet
+              focusNode: _fieldControllers[idx].item2,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              name: q.question,
+              decoration: InputDecoration(labelText: q.prompt),
+              validator: FormBuilderValidators.max(MAXIMUM_CHARS),
+              onSaved: (val) {
+                q.answer = val ?? "";
+              },
+              onSubmitted: (val) {
+                _fieldControllers[idx].item2.unfocus();
+                if (_fieldControllers.length - 1 > idx) {
+                  FocusScope.of(context).requestFocus(_fieldControllers[idx + 1].item2);
+                }
+              },
+            );
+          }
+          break;
+        case QuestionType.meta:
+          {
+            formItem = _buildTags(context, _fieldControllers[index].item1, _fieldControllers[index].item2);
+          }
       }
       items.add(formItem);
       items.add(SizedBox(height: 20));

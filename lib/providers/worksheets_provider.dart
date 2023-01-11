@@ -4,12 +4,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/providers/worksheet_db.dart';
 import 'package:quiver/collection.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:version/version.dart';
 import 'package:yaml/yaml.dart';
 
 import '../models/worksheet.dart';
@@ -460,26 +460,41 @@ class WorksheetDynamicFilterNotifier extends WorksheetFilterNotifier<StateProvid
 //   }
 // }
 
+const WORKSHEET_ROOT = "worksheet";
+
 class WorksheetDbException implements Exception {
   final String cause;
   WorksheetDbException(this.cause);
 }
 
 class WorksheetTypeRepository {
-  Map<String, WorksheetContent>? _worksheets;
+  WorksheetDefinition? _worksheetDefinition;
+  // Map<String, WorksheetContent>? _worksheets;
 
-  Future<Map<String, WorksheetContent>?> getInquiryTypes() async {
-    if (_worksheets != null) {
-      return _worksheets;
+  Future<WorksheetDefinition?> getInquiryTypes() async {
+    if (_worksheetDefinition != null) {
+      return _worksheetDefinition;
     }
     final doc = loadYaml(await rootBundle.loadString('assets/question_types.yaml')) as Map;
-    _worksheets = Map.unmodifiable(doc.map((k, v) => MapEntry(k.toString(), WorksheetContent.fromYamlMap(k, v))));
+    Map<dynamic, dynamic> body;
+    Version version;
+    if (doc.containsKey(WORKSHEET_ROOT)) {
+      final root = doc[WORKSHEET_ROOT] as Map;
+      body = root["body"] as Map;
+      version = Version.parse(root["version"]);
+    } else {
+      body = doc;
+      version = Version.parse(FALLBACK_WORKSHEET_VERSION);
+    }
+    final Map<String, WorksheetContent> worksheets =
+        Map.unmodifiable(body.map((k, v) => MapEntry(k.toString(), WorksheetContent.fromYamlMap(k, v, version))));
 
-    return _worksheets;
+    _worksheetDefinition = WorksheetDefinition(version, worksheets);
+    return _worksheetDefinition;
   }
 
   Map<String, WorksheetContent>? getCachedInquiryTypes() {
-    return _worksheets;
+    return _worksheetDefinition?.worksheets;
   }
 }
 

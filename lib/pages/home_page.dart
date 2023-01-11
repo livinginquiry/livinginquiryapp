@@ -174,11 +174,11 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
 
     var provider = ref.read(worksheetTypeProvider);
     await provider.getInquiryTypes().then(
-        (value) => value?.forEach((k, v) {
+        (value) => value?.worksheets.forEach((k, v) {
               children.add(_createWorksheetSpeedDialOptions(
                   onPressed: () => _newWorksheetTapped(context, v), label: v.displayName!));
             }),
-        onError: (err) => print("Caught error while loading inquiry types! $err"));
+        onError: (err, s) => print("Caught error while loading inquiry types! $err\n$s"));
     return children;
   }
 
@@ -338,7 +338,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       final provider = ref.read(worksheetTypeProvider);
       final typeMap = await provider.getInquiryTypes();
 
-      await generateWorksheets(repo, 300, typeMap?.values.toList() ?? <WorksheetContent>[]);
+      await generateWorksheets(repo, 300, typeMap?.worksheets.values.toList() ?? <WorksheetContent>[]);
       final db = ref.read(worksheetNotifierProvider.notifier);
       await db.triggerReload();
     }

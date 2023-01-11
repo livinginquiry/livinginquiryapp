@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:developer';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:version/version.dart';
 
 import 'constants.dart' as constants;
 import 'util.dart' as util;
@@ -103,14 +106,41 @@ class Worksheet {
 //TODO: make this dynamic(?)
 enum WorksheetType { openMic, oneBelief, judgeYourNeighbor }
 
+class WorksheetDefinition {
+  final Map<String, WorksheetContent> worksheets;
+  final Version version;
+  WorksheetDefinition(this.version, this.worksheets);
+
+  bool operator ==(o) => o is WorksheetDefinition && o.version == version;
+
+  @override
+  int get hashCode => version.hashCode;
+
+  @override
+  toString() {
+    return "WorksheetDefinition(version: $version)";
+  }
+}
+
+const FALLBACK_WORKSHEET_VERSION = "0.0.1";
+final _FALLBACK_VERSION = Version(0, 0, 1);
+
 class WorksheetContent {
   final List<Question> questions;
   final WorksheetType type;
   final String? displayName;
   final List<WorksheetType>? children;
-  WorksheetContent({required this.questions, required this.type, required this.displayName, this.children});
+  final Version version;
+  WorksheetContent(
+      {required List<Question> questions,
+      required this.type,
+      required this.displayName,
+      required Version version,
+      this.children})
+      : this.version = version,
+        this.questions = _FALLBACK_VERSION.compareTo(version) == 0 ? _insertTags(questions) : questions;
 
-  WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data)
+  WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data, Version version)
       : this(
             questions:
                 ((data['questions'] ?? {throw new BadWorksheetFormat("Questions are required!")}) as List<dynamic>)
@@ -118,6 +148,7 @@ class WorksheetContent {
                     .toList(),
             type: util.enumFromString(WorksheetType.values, type, snakeCase: true) ?? WorksheetType.openMic,
             displayName: data['display_name'],
+            version: version,
             children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
                 .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
                 .toList());
@@ -130,15 +161,33 @@ class WorksheetContent {
                     .toList(),
             type: util.enumFromString(WorksheetType.values, data['type'], snakeCase: true) ?? WorksheetType.openMic,
             displayName: data['display_name'],
+            version: Version.parse(data['version'] ?? FALLBACK_WORKSHEET_VERSION),
             children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
                 .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
                 .toList());
+
+  // TODO: devise better versioning strategy!
+  static List<Question> _insertTags(List<Question> questions) {
+    if (questions.isNotEmpty &&
+        questions.firstWhereOrNull((q) => q.type == QuestionType.meta && q.question == "Tags") == null) {
+      questions.insert(
+          questions.length - 1,
+          Question(
+              question: "Tags",
+              answer: "",
+              type: QuestionType.meta,
+              prompt: "Enter tags separated by comma or space."));
+    }
+
+    return questions;
+  }
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
     map['questions'] = questions.map((p) => p.toMap()).toList();
     map['type'] = util.enumToString(type, snakeCase: true);
     map['display_name'] = displayName;
+    map['version'] = version.toString();
     map['children'] = children?.map((t) => util.enumToString(t, snakeCase: true)).toList() ?? List.empty();
     return map;
   }
@@ -165,9 +214,14 @@ class WorksheetContent {
 
   @override
   int get hashCode => Object.hash(questions, type, displayName, children);
+
+  @override
+  toString() {
+    return "WorksheetContent(displayName: $displayName, type: $type, children: $children, questions: $questions)";
+  }
 }
 
-enum QuestionType { freeform, multiple }
+enum QuestionType { freeform, multiple, meta }
 
 class Question {
   final QuestionType type;
@@ -186,7 +240,8 @@ class Question {
             answer: data['answer'] ?? "",
             prompt: data['prompt'] ?? "",
             values: data['values'] == null ? null : List<String>.from(data['values']),
-            type: data['type'] = util.enumFromString(QuestionType.values, data['type']) ?? QuestionType.freeform);
+            type: data['type'] =
+                util.enumFromString(QuestionType.values, data['type']?.trim()) ?? QuestionType.freeform);
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
@@ -212,6 +267,11 @@ class Question {
 
   @override
   int get hashCode => Object.hash(question, answer, type, prompt, values);
+
+  @override
+  toString() {
+    return "Question(question: $question, answer: $answer, type: $type, prompt: $prompt)";
+  }
 }
 
 class BadWorksheetFormat implements Exception {
