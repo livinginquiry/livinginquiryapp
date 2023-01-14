@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import '../models/util.dart';
 import 'color_slider.dart';
 
-enum moreOptions { archive, unarchive, delete, share, copy }
+enum moreOptions { archive, unarchive, delete, share, copy, star, unstar }
 
 class OptionsSheet extends StatefulWidget {
   final Color color;
   final DateTime? lastModified;
   final bool isArchived;
+  final bool isStarred;
   final Future<void> Function(Color) callBackColorTapped;
 
   const OptionsSheet(
       {Key? key,
       required this.color,
       required this.isArchived,
+      required this.isStarred,
       this.lastModified,
       required this.callBackColorTapped,
       this.callBackOptionTapped})
@@ -27,12 +29,14 @@ class OptionsSheet extends StatefulWidget {
 }
 
 class _OptionsSheetState extends State<OptionsSheet> {
-  late Color worksheetColor;
+  late Color _worksheetColor;
+  late bool _isStarred;
 
   @override
   void initState() {
     super.initState();
-    worksheetColor = widget.color;
+    _worksheetColor = widget.color;
+    _isStarred = widget.isStarred;
   }
 
   @override
@@ -42,28 +46,45 @@ class _OptionsSheetState extends State<OptionsSheet> {
       child: new Wrap(
         children: <Widget>[
           new ListTile(
-              leading: new Icon(widget.isArchived ? Icons.unarchive : Icons.archive),
+              leading: SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: Switch(
+                    value: _isStarred,
+                    onChanged: (value) {
+                      setState(() {
+                        _isStarred = value;
+                      });
+                      widget.callBackOptionTapped!(value ? moreOptions.star : moreOptions.unstar);
+                    },
+                    activeTrackColor: Colors.lightGreenAccent,
+                    activeColor: Colors.green,
+                  )),
+              title: new Text("Starred")),
+          new ListTile(
+              leading:
+                  SizedBox(height: 50, width: 50, child: new Icon(widget.isArchived ? Icons.unarchive : Icons.archive)),
               title: new Text(widget.isArchived ? 'Un-Archive' : 'Archive'),
               onTap: () {
                 Navigator.of(context).pop();
                 widget.callBackOptionTapped!(widget.isArchived ? moreOptions.unarchive : moreOptions.archive);
               }),
           new ListTile(
-              leading: new Icon(Icons.delete),
-              title: new Text('Delete permanently'),
+              leading: SizedBox(height: 50, width: 50, child: Icon(Icons.delete)),
+              title: Text('Delete permanently'),
               onTap: () {
                 Navigator.of(context).pop();
                 widget.callBackOptionTapped!(moreOptions.delete);
               }),
           new ListTile(
-              leading: new Icon(Icons.content_copy),
-              title: new Text('Duplicate'),
+              leading: SizedBox(height: 50, width: 50, child: Icon(Icons.content_copy)),
+              title: Text('Duplicate'),
               onTap: () {
                 Navigator.of(context).pop();
                 widget.callBackOptionTapped!(moreOptions.copy);
               }),
           new ListTile(
-              leading: new Icon(Icons.share),
+              leading: SizedBox(height: 50, width: 50, child: Icon(Icons.share)),
               title: new Text('Share'),
               onTap: () {
                 Navigator.of(context).pop();
@@ -77,7 +98,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
               child: ColorSlider(
                 callBackColorTapped: _changeColor,
                 // call callBack from worksheetPage here
-                worksheetColor: worksheetColor, // take color from local variable
+                worksheetColor: _worksheetColor, // take color from local variable
               ),
             ),
           ),

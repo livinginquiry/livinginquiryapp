@@ -482,9 +482,11 @@ class WorksheetTypeRepository {
       final root = doc[WORKSHEET_ROOT] as Map;
       body = root["body"] as Map;
       version = Version.parse(root["version"]);
+      log("Detected worksheet version $version");
     } else {
       body = doc;
       version = Version.parse(FALLBACK_WORKSHEET_VERSION);
+      log("Legacy worksheet detected! Using fallback worksheet $version");
     }
     final Map<String, WorksheetContent> worksheets =
         Map.unmodifiable(body.map((k, v) => MapEntry(k.toString(), WorksheetContent.fromYamlMap(k, v, version))));

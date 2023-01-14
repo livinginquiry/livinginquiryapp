@@ -138,7 +138,7 @@ class WorksheetContent {
       required Version version,
       this.children})
       : this.version = version,
-        this.questions = _FALLBACK_VERSION.compareTo(version) == 0 ? _insertTags(questions) : questions;
+        this.questions = _FALLBACK_VERSION.compareTo(version) == 0 ? _insertMetaFields(questions, type) : questions;
 
   WorksheetContent.fromYamlMap(String type, Map<dynamic, dynamic> data, Version version)
       : this(
@@ -167,16 +167,37 @@ class WorksheetContent {
                 .toList());
 
   // TODO: devise better versioning strategy!
-  static List<Question> _insertTags(List<Question> questions) {
-    if (questions.isNotEmpty &&
-        questions.firstWhereOrNull((q) => q.type == QuestionType.meta && q.question == "Tags") == null) {
-      questions.insert(
-          questions.length - 1,
-          Question(
-              question: "Tags",
-              answer: "",
-              type: QuestionType.meta,
-              prompt: "Enter tags separated by comma or space."));
+  static List<Question> _insertMetaFields(List<Question> questions, WorksheetType type) {
+    if (questions.isNotEmpty) {
+      if (type == WorksheetType.judgeYourNeighbor &&
+          questions.firstWhereOrNull((q) => q.type == QuestionType.meta && q.subType == QuestionSubType.children) ==
+              null) {
+        questions.insert(
+            questions.length - 1,
+            Question(
+                question: "Continue the Work",
+                answer: "",
+                type: QuestionType.meta,
+                subType: QuestionSubType.children,
+                prompt: ""));
+      }
+      if (questions.firstWhereOrNull((q) => q.type == QuestionType.meta && q.subType == QuestionSubType.tags) == null) {
+        questions.add(Question(
+            question: "Tags",
+            answer: "",
+            type: QuestionType.meta,
+            subType: QuestionSubType.tags,
+            prompt: "Enter tags separated by comma or space."));
+      }
+      if (questions.firstWhereOrNull((q) => q.type == QuestionType.meta && q.subType == QuestionSubType.color_picker) ==
+          null) {
+        questions.add(Question(
+            question: "Settings",
+            answer: "",
+            type: QuestionType.meta,
+            subType: QuestionSubType.color_picker,
+            prompt: "Pick background color."));
+      }
     }
 
     return questions;
@@ -223,8 +244,11 @@ class WorksheetContent {
 
 enum QuestionType { freeform, multiple, meta }
 
+enum QuestionSubType { tags, children, color_picker }
+
 class Question {
   final QuestionType type;
+  final QuestionSubType? subType;
   final String question;
 
   final String prompt;
@@ -232,7 +256,13 @@ class Question {
 
   String answer;
 
-  Question({required this.question, required this.answer, required this.type, required this.prompt, this.values});
+  Question(
+      {required this.question,
+      required this.answer,
+      required this.type,
+      required this.prompt,
+      this.values,
+      this.subType});
 
   Question.fromMap(Map<dynamic, dynamic> data)
       : this(
@@ -240,8 +270,8 @@ class Question {
             answer: data['answer'] ?? "",
             prompt: data['prompt'] ?? "",
             values: data['values'] == null ? null : List<String>.from(data['values']),
-            type: data['type'] =
-                util.enumFromString(QuestionType.values, data['type']?.trim()) ?? QuestionType.freeform);
+            type: util.enumFromString(QuestionType.values, data['type']?.trim()) ?? QuestionType.freeform,
+            subType: util.enumFromString(QuestionSubType.values, data['sub_type']?.trim()));
 
   Map<String, dynamic> toMap() {
     final map = new Map<String, dynamic>();
@@ -250,6 +280,7 @@ class Question {
     map['prompt'] = prompt;
     map['values'] = values;
     map['type'] = util.enumToString(type);
+    map['sub_type'] = util.enumToString(subType);
     return map;
   }
 
@@ -262,15 +293,16 @@ class Question {
       o.question == question &&
       o.answer == answer &&
       o.type == type &&
+      o.subType == subType &&
       o.prompt == prompt &&
       listEquals(o.values, values);
 
   @override
-  int get hashCode => Object.hash(question, answer, type, prompt, values);
+  int get hashCode => Object.hash(question, answer, type, subType, prompt, values);
 
   @override
   toString() {
-    return "Question(question: $question, answer: $answer, type: $type, prompt: $prompt)";
+    return "Question(question: $question, answer: $answer, type: $type, prompt: $prompt, subType: $subType)";
   }
 }
 

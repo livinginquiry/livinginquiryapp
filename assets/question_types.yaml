@@ -1,5 +1,5 @@
 worksheet:
-  version: 0.0.2
+  version: 0.0.4
   body:
     open_mic:
       display_name: Open Note
@@ -7,12 +7,17 @@ worksheet:
         - question: What is it about?
           type: freeform
           prompt: ~
-        - question: Tags
-          type: meta
-          prompt: Enter tags separated by comma or space.
         - question: Notes
           type: freeform
           prompt: ~
+        - question: Tags
+          type: meta
+          sub_type: tags
+          prompt: Enter tags separated by comma or space.
+        - question: Settings
+          type: meta
+          sub_type: color_picker
+          prompt: Pick background color.
     one_belief:
       display_name: One Belief at a Time
       questions:
@@ -39,12 +44,17 @@ worksheet:
         - question: Turn the thought around.
           type: freeform
           prompt: Is the opposite as true or truer?
-        - question: Tags
-          type: meta
-          prompt: Enter tags separated by comma or space.
         - question: Notes
           type: freeform
           prompt: ~
+        - question: Tags
+          type: meta
+          sub_type: tags
+          prompt: Enter tags separated by comma or space.
+        - question: Settings
+          type: meta
+          sub_type: color_picker
+          prompt: Pick background color.
     judge_your_neighbor:
       display_name: Judge Your Neighbor
       questions:
@@ -69,10 +79,19 @@ worksheet:
         - question: 6. What is it about this person and situation that you don’t ever want to experience again?
           type: freeform
           prompt: “I don’t ever want…”
-        - question: Tags
+        - question: Continue the Work
           type: meta
-          prompt: Enter tags separated by comma or space.
+          sub_type: children
+          prompt:
         - question: Notes
           type: freeform
           prompt: ~
+        - question: Tags
+          type: meta
+          sub_type: tags
+          prompt: Enter tags separated by comma or space.
+        - question: Settings
+          type: meta
+          sub_type: color_picker
+          prompt: Pick background color.
       children: [ one_belief ]

@@ -40,18 +40,18 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   final List<Tuple2<TextEditingController, FocusNode>> _fieldControllers = [];
   late final KeyboardActionsConfig _keyboardActionsConfig;
 
-  late Set<String> _tagList;
   Set<String> _suggestions = <String>{};
 
   late Future<Set<String>> _stopWords;
+  late final List<String> _tags;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _worksheet = widget.worksheet;
+    _tags = widget.worksheet.tags?.toList() ?? <String>[];
     _original = Worksheet.clone(widget.worksheet);
     _worksheetColor = _worksheet.noteColor;
-    _tagList = _worksheet.tags ?? <String>{};
     if (widget.worksheet.id == -1) {
       _isNew = true;
     }
@@ -138,7 +138,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               initialValue: {},
               child:
                   Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet))),
-          Column(
+          /*Column(
             children: [
               Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -157,52 +157,45 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                       activeColor: Colors.green,
                     )
                   ]),
-              // _buildTags(ctx),
-              _buildChildButtons(ctx)
             ],
-          ),
-          new Padding(
-            padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-            child: SizedBox(
-              height: 44,
-              width: MediaQuery.of(context).size.width,
-              child: ColorSlider(
-                callBackColorTapped: (color) {
-                  _fbKey.currentState!.save();
-                  _changeColor(color);
-                },
-                // call callBack from worksheetPage here
-                worksheetColor: _worksheetColor, // take color from local variable
-              ),
-            ),
-          )
+          ),*/
         ]))));
   }
 
-  Widget _buildTags(BuildContext context, TextEditingController controller, FocusNode focusNode) {
+  Widget _buildTags(BuildContext context, TextEditingController controller, FocusNode focusNode, String title,
+      String prompt, TextStyle style) {
     return FutureBuilder(
         future: _stopWords,
         builder: (BuildContext context, AsyncSnapshot<Set<String>> snapshot) {
           if (snapshot.hasData) {
             return Padding(
-              padding: const EdgeInsets.all(3.0),
+              padding: const EdgeInsets.only(left: 3.0, right: 3.0, top: 3.0, bottom: 10.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  FormBuilderField<Set<String>?>(
-                      name: "Tags",
-                      onChanged: (tags) => _worksheet.tags = tags,
+                  FormBuilderField<List<String>?>(
+                      name: title,
+                      onChanged: (tags) {
+                        if (tags != null) {
+                          _tags.clear();
+                          _tags.addAll(tags);
+                        } else {
+                          _tags.clear();
+                        }
+                        _worksheet.tags = _tags.toSet();
+                        _fbKey.currentState!.save();
+                      },
                       builder: (FormFieldState field) {
                         return ChipTags(_fbKey,
-                            tags: _tagList,
+                            tags: new List.from(_tags),
                             onChanged: (value) => field.didChange(value),
-                            // onChanged: (tags) => setState(() {
-                            //   _worksheet.tags = tags;
-                            // }),
                             suggestions: _suggestions,
                             stopWords: snapshot.data,
                             textEditingController: controller,
-                            focusNode: focusNode);
+                            focusNode: focusNode,
+                            minTextFieldWidth: 100.0,
+                            prompt: prompt,
+                            textFieldStyle: style);
                       }),
                 ],
               ),
@@ -213,7 +206,44 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         });
   }
 
-  Widget _buildChildButtons(BuildContext context) {
+  Widget _buildFormColorPicker(BuildContext context, String title, String prompt, TextStyle textStyle) {
+    return new Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        SizedBox(height: 10),
+        Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Text(prompt, style: textStyle),
+            ]),
+        SizedBox(height: 10),
+        Padding(
+            padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
+            child: SizedBox(
+              height: 44,
+              width: MediaQuery.of(context).size.width,
+              child: FormBuilderField<Color?>(
+                  name: title,
+                  onChanged: (color) {
+                    if (color != null) {
+                      _fbKey.currentState!.save();
+                      _changeColor(color);
+                    }
+                  },
+                  builder: (FormFieldState field) {
+                    return ColorSlider(
+                      callBackColorTapped: (color) => field.didChange(color),
+                      // call callBack from worksheetPage here
+                      worksheetColor: _worksheetColor, // take color from local variable
+                    );
+                  }),
+            ))
+      ],
+    );
+  }
+
+  Widget _buildChildButtons(BuildContext context, String prompt, TextStyle style) {
     if (_worksheet.content.children?.isNotEmpty ?? false) {
       final provider = ref.read(worksheetTypeProvider);
       final childrenTypes = _worksheet.content.children!;
@@ -222,7 +252,10 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
           .entries
           .map((e) => e.value)
           .where((element) => childrenTypes.contains(element.type));
-      final label = Text("Continue The Work:");
+      final label = Text(
+        prompt,
+        style: style,
+      );
       final buttons = contentTypes.map((e) => _createNewWorksheetButton(context, e)).toList();
       return Row(children: [label, Expanded(child: SizedBox.shrink()), ...buttons]);
     } else {
@@ -287,6 +320,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
           return OptionsSheet(
             color: _worksheetColor,
             isArchived: _worksheet.isArchived,
+            isStarred: _worksheet.isStarred,
             callBackColorTapped: (color) => _changeColor(color),
             callBackOptionTapped: bottomSheetOptionTappedHandler,
             lastModified: _worksheet.dateLastEdited,
@@ -332,6 +366,28 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       case moreOptions.copy:
         {
           _copy();
+          break;
+        }
+      case moreOptions.star:
+        {
+          if (!this._worksheet.isStarred) {
+            print("I'm starring!!!");
+            setState(() {
+              this._worksheet.isStarred = true;
+              _fbKey.currentState!.save();
+            });
+          }
+          break;
+        }
+      case moreOptions.unstar:
+        {
+          if (this._worksheet.isStarred) {
+            print("I'm un-starring!!!");
+            setState(() {
+              this._worksheet.isStarred = false;
+              _fbKey.currentState!.save();
+            });
+          }
           break;
         }
     }
@@ -467,6 +523,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   List<Widget> _buildQuestions(Worksheet worksheet) {
     final List<Widget> items = [];
+    final TextStyle textFieldStyle = Theme.of(context).textTheme.subtitle1!;
 
     worksheet.content.questions.asMap().forEach((index, q) {
       items.add(Text(
@@ -496,9 +553,8 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         case QuestionType.freeform:
           {
             final idx = index;
-            final TextStyle currentStyle = Theme.of(context).textTheme.subtitle1!;
             formItem = FormBuilderTextField(
-              style: currentStyle.copyWith(fontSize: (currentStyle.fontSize ?? 16) + 2),
+              style: textFieldStyle.copyWith(fontSize: (textFieldStyle.fontSize ?? 16) + 2),
               maxLines: null,
               readOnly: false,
               textCapitalization: TextCapitalization.sentences,
@@ -524,9 +580,22 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
           }
           break;
         case QuestionType.meta:
-          {
-            formItem = _buildTags(context, _fieldControllers[index].item1, _fieldControllers[index].item2);
+          TextStyle style = textFieldStyle.copyWith(fontSize: (textFieldStyle.fontSize ?? 16) + 2);
+          switch (q.subType) {
+            case QuestionSubType.tags:
+              formItem = _buildTags(
+                  context, _fieldControllers[index].item1, _fieldControllers[index].item2, q.question, q.prompt, style);
+              break;
+            case QuestionSubType.children:
+              formItem = _buildChildButtons(context, q.prompt, style);
+              break;
+            case QuestionSubType.color_picker:
+              formItem = _buildFormColorPicker(context, q.question, q.prompt, style);
+              break;
+            case null:
+              throw FormatException("No subtype provided!");
           }
+          break;
       }
       items.add(formItem);
       items.add(SizedBox(height: 20));
