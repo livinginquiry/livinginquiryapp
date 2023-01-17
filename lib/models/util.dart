@@ -156,3 +156,26 @@ Future<bool> confirmationDialog(BuildContext context, String title, String messa
   );
   return res ?? false;
 }
+
+Future<void> errorDialog(BuildContext context, String title, String message) async {
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [SizedBox(height: 40, width: 40, child: Icon(Icons.error, color: Colors.red)), Text(title)]),
+        content: Row(mainAxisAlignment: MainAxisAlignment.start, children: [Text(message, softWrap: true)]),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

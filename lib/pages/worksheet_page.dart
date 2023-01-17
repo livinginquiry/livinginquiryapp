@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -138,27 +139,6 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               initialValue: {},
               child:
                   Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _buildQuestions(this._worksheet))),
-          /*Column(
-            children: [
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    Text("Mark as Starred"),
-                    Switch(
-                      value: this._worksheet.isStarred,
-                      onChanged: (value) {
-                        setState(() {
-                          this._worksheet.isStarred = value;
-                          _fbKey.currentState!.save();
-                        });
-                      },
-                      activeTrackColor: Colors.lightGreenAccent,
-                      activeColor: Colors.green,
-                    )
-                  ]),
-            ],
-          ),*/
         ]))));
   }
 
@@ -279,10 +259,18 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   Future<void> _createChildWorksheet(BuildContext ctx, WorksheetContent content) async {
     _fbKey.currentState!.save();
-    await _persistData(ctx);
-    var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(),
-        parentId: _worksheet.id);
-    Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
+    String msg = await _persistData(ctx);
+    if (msg.isNotEmpty) {
+      _showErrorDialog(ctx, msg);
+    } else {
+      var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(),
+          parentId: _worksheet.id);
+      Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
+    }
+  }
+
+  void _showErrorDialog(BuildContext ctx, String message) {
+    errorDialog(ctx, "Save Worksheet Error", message);
   }
 
   Widget _pageTitle() {
@@ -328,13 +316,20 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
         });
   }
 
-  Future<void> _persistData(BuildContext context) async {
-    if (_worksheet.content.questions.first.answer.isNotEmpty && _original != _worksheet) {
+  Future<String> _persistData(BuildContext context) async {
+    if (_original != _worksheet) {
       final db = ref.read(worksheetNotifierProvider.notifier);
-      final id = await db.addWorksheet(_worksheet);
-      _worksheet.id = id;
+      return db.addWorksheet(_worksheet).then((id) {
+        _worksheet.id = id;
+        return "";
+      }).catchError((e) {
+        final msg = "Unable to save worksheet: $e";
+        log(msg, error: e, stackTrace: StackTrace.current);
+        return msg;
+      });
     } else {
-      print("Ignoring since first question was empty or no changes");
+      print("Ignoring since no changes");
+      return "";
     }
   }
 
@@ -502,9 +497,14 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     //show saved toast after calling _persistData function.
     ref.watch(prefsUtilProvider).clearLastWorksheetId();
     _fbKey.currentState!.save();
-    await _persistData(context);
-    Navigator.pop(context, _worksheet.id);
-    return true;
+    final msg = await _persistData(context);
+    if (msg.isNotEmpty) {
+      _showErrorDialog(context, msg);
+      return false;
+    } else {
+      Navigator.pop(context, _worksheet.id);
+      return true;
+    }
   }
 
   void _exitWithoutSaving(BuildContext context) {
