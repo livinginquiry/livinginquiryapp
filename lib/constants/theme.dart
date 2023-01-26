@@ -46,6 +46,7 @@ ThemeData lightTheme = ThemeData(
         ),
     buttonColor: Color(0xFF1E21CA),
     secondaryHeaderColor: Colors.grey,
+    textSelectionTheme: TextSelectionThemeData(selectionColor: Color(0xffE09E45)),
     // textSelectionColor: Color(0xffB5BFD3),
     // cursorColor: Color(0xff936F3E),
     // textSelectionHandleColor: Color(0xff936F3E),

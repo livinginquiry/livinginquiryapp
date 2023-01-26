@@ -523,13 +523,13 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   List<Widget> _buildQuestions(Worksheet worksheet) {
     final List<Widget> items = [];
-    final TextStyle textFieldStyle = Theme.of(context).textTheme.subtitle1!;
-
+    final TextStyle textFieldStyle = Theme.of(context).textTheme.titleMedium!;
+    final TextStyle largerStyle = textFieldStyle.copyWith(fontSize: (textFieldStyle.fontSize ?? 16) + 2);
     worksheet.content.questions.asMap().forEach((index, q) {
       items.add(Text(
         q.question,
         maxLines: null,
-        style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+        style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
       ));
 
       var formItem;
@@ -554,7 +554,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
           {
             final idx = index;
             formItem = FormBuilderTextField(
-              style: textFieldStyle.copyWith(fontSize: (textFieldStyle.fontSize ?? 16) + 2),
+              style: largerStyle,
               maxLines: null,
               readOnly: false,
               textCapitalization: TextCapitalization.sentences,
@@ -580,7 +580,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
           }
           break;
         case QuestionType.meta:
-          TextStyle style = textFieldStyle.copyWith(fontSize: (textFieldStyle.fontSize ?? 16) + 2);
+          TextStyle style = largerStyle;
           switch (q.subType) {
             case QuestionSubType.tags:
               formItem = _buildTags(
