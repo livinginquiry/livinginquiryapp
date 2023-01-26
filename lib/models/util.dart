@@ -3,7 +3,7 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'constants.dart' as constants;
+import '../constants/constants.dart' as constants;
 
 final fontColor = Color(0xff595959);
 final borderColor = Color(0xffd3d3d3);

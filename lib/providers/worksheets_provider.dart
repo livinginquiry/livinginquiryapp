@@ -49,120 +49,13 @@ final childWorksheetsProvider = FutureProvider.autoDispose.family<List<Worksheet
 //     .family<ChildWorksheetNotifier, List<Worksheet>, int>(
 //         () => ChildWorksheetNotifier());
 
-enum FilterMode { Yes, No, OnlyYes }
-
 final searchFilterProvider = StateProvider<WorksheetFilter?>((ref) => null);
-
-class WorksheetFilter {
-  final FilterMode includeStarred;
-  final FilterMode includeArchived;
-  final FilterMode includeChildren;
-
-  final bool shouldRefresh;
-  final String? query;
-  final splitPattern = new RegExp(r"[,\s]");
-
-  WorksheetFilter(
-      {this.includeStarred = FilterMode.Yes,
-      this.includeArchived = FilterMode.No,
-      this.includeChildren = FilterMode.No,
-      this.shouldRefresh = true,
-      this.query});
-
-  WorksheetFilter copyWith(
-      {FilterMode? includeStarred,
-      FilterMode? includeArchived,
-      FilterMode? includeChildren,
-      bool? shouldRefresh,
-      String? query}) {
-    return WorksheetFilter(
-      includeStarred: includeStarred ?? this.includeStarred,
-      includeArchived: includeArchived ?? this.includeArchived,
-      includeChildren: includeChildren ?? this.includeChildren,
-      shouldRefresh: shouldRefresh ?? this.shouldRefresh,
-      query: query ?? this.query,
-    );
-  }
-
-  bool isSearch() {
-    return query != null;
-  }
-
-  Set<String> getSearchTerms(Set<String> stopWords) {
-    return query == null
-        ? <String>{}
-        : query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w) && w.isNotEmpty).toSet();
-  }
-
-  bool apply(Worksheet worksheet, Set<String>? searchTerms) {
-    if ((includeArchived == FilterMode.No && worksheet.isArchived) ||
-        (includeArchived == FilterMode.OnlyYes && !worksheet.isArchived)) {
-      return false;
-    }
-
-    if ((includeStarred == FilterMode.No && worksheet.isStarred) ||
-        (includeStarred == FilterMode.OnlyYes && !worksheet.isStarred)) {
-      return false;
-    }
-
-    if ((includeChildren == FilterMode.No && worksheet.hasParent) ||
-        (includeChildren == FilterMode.OnlyYes && !worksheet.hasParent)) {
-      return false;
-    }
-
-    if (query == null) {
-      //not searching so just return true
-      return true;
-    }
-
-    if (searchTerms?.isEmpty ?? true) {
-      // we're searching but no terms were supplied so return false to indicate no matches
-      return false;
-    } else {
-      final commonTags = worksheet.tags?.isEmpty ?? true
-          ? <String>{}
-          : searchTerms!.intersection(worksheet.tags!.map((s) => s.toLowerCase()).toSet());
-
-      // all the words not matched by tags in this worksheet
-      final remaining = Set.from(searchTerms!.difference(commonTags));
-      final answers = worksheet.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
-
-      // of the remaining words, find the first NOT included in the worksheet text
-      final notFound =
-          remaining.firstWhereOrNull((word) => answers.firstWhereOrNull((answer) => answer.contains(word)) == null);
-
-      return notFound == null;
-    }
-  }
-
-  List<Worksheet> applyAll(List<Worksheet> worksheets, Set<String> stopWords) {
-    final searchTerms = getSearchTerms(stopWords);
-    return worksheets.where((ws) => apply(ws, searchTerms)).toList(growable: false);
-  }
-
-  bool operator ==(o) =>
-      o is WorksheetFilter &&
-      o.includeStarred == includeStarred &&
-      o.includeArchived == includeArchived &&
-      o.includeChildren == includeChildren &&
-      o.shouldRefresh == shouldRefresh &&
-      o.query == query;
-
-  @override
-  int get hashCode => Object.hash(includeStarred, includeArchived, includeChildren, shouldRefresh, query);
-
-  @override
-  String toString() {
-    return "WorksheetFilter(includeStarred: $includeStarred, "
-        "includeArchived: $includeArchived, includeChildren: $includeChildren, "
-        "shouldRefresh: $shouldRefresh, query: $query)";
-  }
-}
 
 class WorksheetRepository {
   LinkedHashMap<int, Worksheet>? _cache;
 
   WorksheetRepository(this.ref);
+
   final Ref ref;
 
   Future<int> addWorksheet(Worksheet worksheet) async {
@@ -298,6 +191,7 @@ class WorksheetEvent {
   final int? worksheetId;
 
   bool operator ==(o) => o is WorksheetEvent && o.type == type && o.timestamp == timestamp;
+
   @override
   int get hashCode => Object.hash(type, timestamp);
 
@@ -310,6 +204,7 @@ class WorksheetEvent {
 class WorksheetPayload {
   final List<Worksheet> worksheets;
   final WorksheetEvent event;
+
   WorksheetPayload(this.worksheets, this.event);
 
   bool operator ==(o) => o is WorksheetPayload && o.event == event && o.worksheets == worksheets;
@@ -464,11 +359,13 @@ const WORKSHEET_ROOT = "worksheet";
 
 class WorksheetDbException implements Exception {
   final String cause;
+
   WorksheetDbException(this.cause);
 }
 
 class WorksheetTypeRepository {
   WorksheetDefinition? _worksheetDefinition;
+
   // Map<String, WorksheetContent>? _worksheets;
 
   Future<WorksheetDefinition?> getInquiryTypes() async {

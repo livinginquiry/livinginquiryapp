@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:livinginquiryapp/constants/strings.dart';
 import 'package:livinginquiryapp/models/util.dart';
 import 'package:livinginquiryapp/pages/worksheet_page.dart';
 
@@ -37,7 +38,8 @@ class _WorksheetsPageState extends ConsumerState<WorksheetsPage> with AutomaticK
                     padding: EdgeInsets.zero,
                     child: Builder(builder: (BuildContext context) {
                       if (worksheets.isEmpty) {
-                        return const Center(child: Text('No Worksheets Found'));
+                        return Center(
+                            child: Text(Strings.getString(StringKey.emptyWorksheets, widget.filter.overrideKey)));
                       } else {
                         return GroupedListView<Worksheet, WorksheetBucketHolder>(
                           elements: worksheets,

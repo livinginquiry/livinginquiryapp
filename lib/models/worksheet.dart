@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:version/version.dart';
 
-import 'constants.dart' as constants;
+import '../constants/constants.dart' as constants;
 import 'util.dart' as util;
 
 class Worksheet {
@@ -309,4 +309,119 @@ class Question {
 class BadWorksheetFormat implements Exception {
   final String cause;
   BadWorksheetFormat(this.cause);
+}
+
+enum FilterMode { Yes, No, OnlyYes }
+
+enum FilterOverrideKey { None, Starred }
+
+class WorksheetFilter {
+  final FilterMode includeStarred;
+  final FilterMode includeArchived;
+  final FilterMode includeChildren;
+
+  final bool shouldRefresh;
+  final String? query;
+  final FilterOverrideKey overrideKey;
+  final splitPattern = new RegExp(r"[,\s]");
+
+  WorksheetFilter(
+      {this.includeStarred = FilterMode.Yes,
+      this.includeArchived = FilterMode.No,
+      this.includeChildren = FilterMode.No,
+      this.shouldRefresh = true,
+      this.overrideKey = FilterOverrideKey.None,
+      this.query});
+
+  WorksheetFilter copyWith(
+      {FilterMode? includeStarred,
+      FilterMode? includeArchived,
+      FilterMode? includeChildren,
+      bool? shouldRefresh,
+      FilterOverrideKey? overrideKey,
+      String? query}) {
+    return WorksheetFilter(
+      includeStarred: includeStarred ?? this.includeStarred,
+      includeArchived: includeArchived ?? this.includeArchived,
+      includeChildren: includeChildren ?? this.includeChildren,
+      shouldRefresh: shouldRefresh ?? this.shouldRefresh,
+      overrideKey: overrideKey ?? this.overrideKey,
+      query: query ?? this.query,
+    );
+  }
+
+  bool isSearch() {
+    return query != null;
+  }
+
+  Set<String> getSearchTerms(Set<String> stopWords) {
+    return query == null
+        ? <String>{}
+        : query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w) && w.isNotEmpty).toSet();
+  }
+
+  bool apply(Worksheet worksheet, Set<String>? searchTerms) {
+    if ((includeArchived == FilterMode.No && worksheet.isArchived) ||
+        (includeArchived == FilterMode.OnlyYes && !worksheet.isArchived)) {
+      return false;
+    }
+
+    if ((includeStarred == FilterMode.No && worksheet.isStarred) ||
+        (includeStarred == FilterMode.OnlyYes && !worksheet.isStarred)) {
+      return false;
+    }
+
+    if ((includeChildren == FilterMode.No && worksheet.hasParent) ||
+        (includeChildren == FilterMode.OnlyYes && !worksheet.hasParent)) {
+      return false;
+    }
+
+    if (query == null) {
+      //not searching so just return true
+      return true;
+    }
+
+    if (searchTerms?.isEmpty ?? true) {
+      // we're searching but no terms were supplied so return false to indicate no matches
+      return false;
+    } else {
+      final commonTags = worksheet.tags?.isEmpty ?? true
+          ? <String>{}
+          : searchTerms!.intersection(worksheet.tags!.map((s) => s.toLowerCase()).toSet());
+
+      // all the words not matched by tags in this worksheet
+      final remaining = Set.from(searchTerms!.difference(commonTags));
+      final answers = worksheet.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
+
+      // of the remaining words, find the first NOT included in the worksheet text
+      final notFound =
+          remaining.firstWhereOrNull((word) => answers.firstWhereOrNull((answer) => answer.contains(word)) == null);
+
+      return notFound == null;
+    }
+  }
+
+  List<Worksheet> applyAll(List<Worksheet> worksheets, Set<String> stopWords) {
+    final searchTerms = getSearchTerms(stopWords);
+    return worksheets.where((ws) => apply(ws, searchTerms)).toList(growable: false);
+  }
+
+  bool operator ==(o) =>
+      o is WorksheetFilter &&
+      o.includeStarred == includeStarred &&
+      o.includeArchived == includeArchived &&
+      o.includeChildren == includeChildren &&
+      o.shouldRefresh == shouldRefresh &&
+      o.overrideKey == overrideKey &&
+      o.query == query;
+
+  @override
+  int get hashCode => Object.hash(includeStarred, includeArchived, includeChildren, shouldRefresh, overrideKey, query);
+
+  @override
+  String toString() {
+    return "WorksheetFilter(includeStarred: $includeStarred, "
+        "includeArchived: $includeArchived, includeChildren: $includeChildren, "
+        "shouldRefresh: $shouldRefresh, overrideKey: $overrideKey, query: $query)";
+  }
 }

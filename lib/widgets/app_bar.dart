@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/widgets/search_bar.dart';
 import 'package:livinginquiryapp/widgets/search_transition_painter.dart';
 
+import '../models/worksheet.dart';
 import '../providers/worksheets_provider.dart';
 
 class SearchAppBar extends ConsumerStatefulWidget implements PreferredSizeWidget {

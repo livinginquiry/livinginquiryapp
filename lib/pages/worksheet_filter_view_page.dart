@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livinginquiryapp/pages/worksheets_page.dart';
 
-import '../providers/worksheets_provider.dart';
+import '../models/worksheet.dart';
 
 class WorksheetFilterViewPage extends StatelessWidget {
   final WorksheetFilter filter;

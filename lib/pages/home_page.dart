@@ -188,7 +188,9 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     } else {
       return TabBarView(controller: tabController, children: <Widget>[
         Container(child: WorksheetsPage(WorksheetFilter())),
-        Container(child: WorksheetsPage(WorksheetFilter(includeStarred: FilterMode.OnlyYes)))
+        Container(
+            child: WorksheetsPage(
+                WorksheetFilter(includeStarred: FilterMode.OnlyYes, overrideKey: FilterOverrideKey.Starred)))
       ]);
     }
   }

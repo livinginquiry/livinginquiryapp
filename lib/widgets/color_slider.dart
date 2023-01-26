@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/constants.dart' as constants;
+import '../constants/constants.dart' as constants;
 
 class ColorSlider extends StatefulWidget {
   final void Function(Color) callBackColorTapped;

@@ -7,7 +7,7 @@ import 'package:basic_utils/basic_utils.dart' as basic_utils;
 import 'package:flutter/material.dart';
 import 'package:livinginquiryapp/providers/worksheets_provider.dart';
 
-import 'constants.dart';
+import '../constants/constants.dart';
 
 enum DevOptions { clearData, loadTestData, exportJson }
 
@@ -37,6 +37,8 @@ Worksheet createWorksheet(WorksheetContent content, int ageDays, {Set<String>? t
         break;
       case QuestionType.multiple:
         q.answer = q.values?[next(0, q.values!.length)] ?? "";
+        break;
+      default:
         break;
     }
   });
