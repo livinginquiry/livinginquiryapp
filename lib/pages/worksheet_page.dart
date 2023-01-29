@@ -274,13 +274,15 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   Widget _pageTitle() {
+    final TextStyle navBarStyle =
+        Theme.of(context).textTheme.titleMedium!.copyWith(color: Theme.of(context).colorScheme.secondary.darken(.2));
     if (_isNew) {
-      return Text(_worksheet.content.type.name.titleCase);
+      return Text(_worksheet.content.type.name.titleCase, style: navBarStyle);
     } else {
       final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
           ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)
           : _worksheet.content.displayName ?? _worksheet.content.type.name.titleCase;
-      return Text(heading);
+      return Text(heading, style: navBarStyle);
     }
   }
 

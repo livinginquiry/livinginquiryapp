@@ -8,29 +8,21 @@ import '../constants/constants.dart' as constants;
 final fontColor = Color(0xff595959);
 final borderColor = Color(0xffd3d3d3);
 
+final _todayFormat = DateFormat("h:mm a");
+final _monthFormat = DateFormat("MMM d");
+final _yearFormat = DateFormat("MMM d y");
 String formatDateTime(DateTime dt) {
-  var dtInLocal = dt.toLocal();
-  var now = DateTime.now().toLocal();
-  var dateString = "";
-
-  var diff = now.difference(dtInLocal);
-
-  if (now.day == dtInLocal.day) {
-    // creates format like: 12:35 PM,
-    final todayFormat = DateFormat("h:mm a");
-    dateString += todayFormat.format(dtInLocal);
-  } else if ((diff.inDays) == 1 || (diff.inSeconds < 86400 && now.day != dtInLocal.day)) {
-    final yesterdayFormat = DateFormat("h:mm a");
-    dateString += "Yesterday, " + yesterdayFormat.format(dtInLocal);
-  } else if (now.year == dtInLocal.year && diff.inDays > 1) {
-    final monthFormat = DateFormat("MMM d");
-    dateString += monthFormat.format(dtInLocal);
-  } else {
-    final yearFormat = DateFormat("MMM d y");
-    dateString += yearFormat.format(dtInLocal);
+  switch (getDateBucket(dt).bucket) {
+    case WorksheetBucket.Today:
+    case WorksheetBucket.Yesterday:
+      return _todayFormat.format(dt);
+    case WorksheetBucket.DayOfWeek:
+    case WorksheetBucket.LastWeek:
+    case WorksheetBucket.Month:
+      return _monthFormat.format(dt);
+    case WorksheetBucket.Year:
+      return _yearFormat.format(dt);
   }
-
-  return dateString;
 }
 
 int epochFromDate(DateTime dt) {
@@ -72,7 +64,7 @@ String truncateWithEllipsis(String text, int maxLen) {
   }
 }
 
-enum WorksheetBucket { Today, DayOfWeek, LastWeek, Month, Year }
+enum WorksheetBucket { Today, Yesterday, DayOfWeek, LastWeek, Month, Year }
 
 class WorksheetBucketHolder implements Comparable<WorksheetBucketHolder> {
   WorksheetBucketHolder(this.bucket, this.name);
@@ -100,6 +92,8 @@ WorksheetBucketHolder getDateBucket(DateTime time) {
   final diff = now.difference(then);
   if (DateUtils.isSameDay(now, then)) {
     return toBucketHolder(WorksheetBucket.Today, then);
+  } else if (diff.inDays == 1) {
+    return toBucketHolder(WorksheetBucket.Yesterday, then);
   } else if (diff.inDays < 7 && then.weekday < now.weekday) {
     return toBucketHolder(WorksheetBucket.DayOfWeek, then);
   } else if (now.subtract(Duration(days: now.weekday + 7)).compareTo(then) <= 0) {
@@ -116,6 +110,8 @@ String worksheetBucketToString(WorksheetBucket bucket, DateTime dt) {
   switch (bucket) {
     case WorksheetBucket.Today:
       return "Today";
+    case WorksheetBucket.Yesterday:
+      return "Yesterday";
     case WorksheetBucket.DayOfWeek:
       return DayOfWeekFormat(dt);
     case WorksheetBucket.LastWeek:
@@ -178,4 +174,25 @@ Future<void> errorDialog(BuildContext context, String title, String message) asy
       );
     },
   );
+}
+
+// https://stackoverflow.com/a/67989242
+extension ColorBrightness on Color {
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+
+    return hslDark.toColor();
+  }
+
+  Color lighten([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+
+    final hsl = HSLColor.fromColor(this);
+    final hslLight = hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
+
+    return hslLight.toColor();
+  }
 }

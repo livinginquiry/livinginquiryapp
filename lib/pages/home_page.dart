@@ -90,7 +90,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                                       borderRadius: BorderRadius.only(
                                           topLeft: Radius.circular(10), topRight: Radius.circular(10)),
                                       color: _tabController.index == 0
-                                          ? Theme.of(context).accentColor
+                                          ? Theme.of(context).colorScheme.secondary
                                           : Theme.of(context).scaffoldBackgroundColor),
                                   child: Align(
                                     alignment: Alignment.center,
@@ -104,7 +104,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                                     borderRadius:
                                         BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
                                     color: _tabController.index == 1
-                                        ? Theme.of(context).accentColor
+                                        ? Theme.of(context).colorScheme.secondary
                                         : Theme.of(context).scaffoldBackgroundColor,
                                   ),
                                   child: Align(
@@ -158,7 +158,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       padding: EdgeInsets.symmetric(vertical: 9.0, horizontal: 14.0),
       margin: EdgeInsetsDirectional.zero,
       decoration: BoxDecoration(
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
         borderRadius: BorderRadius.all(Radius.circular(6.0)),
         boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.7), offset: Offset(0.8, 0.8), blurRadius: 2.4)],
       ),

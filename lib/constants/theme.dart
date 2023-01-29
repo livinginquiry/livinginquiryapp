@@ -121,9 +121,7 @@ ThemeData lightTheme = ThemeData(
         ),
     colorScheme: ColorScheme(
         primary: Color(0xFF07053B),
-        primaryVariant: Color(0x1aF5E0C3),
         secondary: Color(0xff789aad),
-        secondaryVariant: Color(0xaaC9A87C),
         brightness: Brightness.light,
         background: Color(0xffB5BFD3),
         error: Colors.red,
