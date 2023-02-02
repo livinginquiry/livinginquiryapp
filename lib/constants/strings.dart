@@ -7,7 +7,8 @@ class Strings {
 
   static const _base = {StringKey.emptyWorksheets: 'No Worksheets Found'};
   static const _overrides = {
-    FilterOverrideKey.Starred: {StringKey.emptyWorksheets: 'Mark any worksheet as Starred to see it here'}
+    FilterOverrideKey.Starred: {StringKey.emptyWorksheets: 'Mark any worksheet as Starred to see it here'},
+    FilterOverrideKey.All: {StringKey.emptyWorksheets: 'Start by creating your first Worksheet'},
   };
 
   static String getString(StringKey key, [FilterOverrideKey? overrideKey]) {

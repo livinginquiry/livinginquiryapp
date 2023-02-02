@@ -313,7 +313,7 @@ class BadWorksheetFormat implements Exception {
 
 enum FilterMode { Yes, No, OnlyYes }
 
-enum FilterOverrideKey { None, Starred }
+enum FilterOverrideKey { None, Starred, All }
 
 class WorksheetFilter {
   final FilterMode includeStarred;

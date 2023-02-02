@@ -102,6 +102,7 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
       minCharsForSuggestions: 1,
       hideKeyboard: false,
       autoFlipDirection: true,
+      hideSuggestionsOnKeyboardHide: false,
       textFieldConfiguration: TextFieldConfiguration(
           controller: _typeAheadController,
           focusNode: _fieldFocusNode,
@@ -126,9 +127,7 @@ class _ChipTagsState extends State<ChipTags> with SingleTickerProviderStateMixin
             .toList();
       },
       itemBuilder: (context, suggestion) {
-        return ListTile(
-          title: Text(suggestion),
-        );
+        return ListTile(title: Text(suggestion));
       },
       transitionBuilder: (context, suggestionsBox, controller) {
         return suggestionsBox;
