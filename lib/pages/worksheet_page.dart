@@ -11,8 +11,8 @@ import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:recase/recase.dart';
 import 'package:share/share.dart';
 import 'package:tuple/tuple.dart';
-import 'package:validators/validators.dart';
 
+import '../models/format.dart';
 import '../providers/preferences.dart';
 import '../models/util.dart';
 import '../models/worksheet.dart';
@@ -560,7 +560,9 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               maxLines: null,
               readOnly: false,
               textCapitalization: TextCapitalization.sentences,
-              inputFormatters: <TextInputFormatter>[_BulletFormatter()],
+              inputFormatters: <TextInputFormatter>[
+                if (q.subType == QuestionSubType.turnaround) TurnaroundBulletFormatter() else DefaultBulletFormatter()
+              ],
               controller: _fieldControllers[idx].item1,
               autofocus: index == 0 && _isNew, // focus on first field when it's a new worksheet
               focusNode: _fieldControllers[idx].item2,
@@ -594,6 +596,8 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
             case QuestionSubType.color_picker:
               formItem = _buildFormColorPicker(context, q.question, q.prompt, style);
               break;
+            case QuestionSubType.turnaround:
+              throw FormatException("QuestionSubType.turnaround not allowed for question type meta");
             case null:
               throw FormatException("No subtype provided!");
           }
@@ -609,54 +613,5 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   Future<Set<String>> _getStopWords() async {
     var provider = ref.read(stopWordsProvider);
     return provider.getStopWords();
-  }
-}
-
-class _BulletFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    final int oldTextLength = oldValue.text.length;
-    final int newTextLength = newValue.text.length;
-    if (newTextLength - oldTextLength == 1 &&
-        newValue.selection.baseOffset == newValue.selection.extentOffset &&
-        newValue.text[newValue.selection.extentOffset - 1] == '\n') {
-      //TODO: see if the previous line had a leading bullet. If not add it!
-      var shift = 2;
-      var prefix = newValue.text.substring(0, newValue.selection.extentOffset);
-      var start = prefix.substring(0, prefix.length).split('').reversed.join().indexOf('\n', 1);
-      if (start < 0) {
-        start = 0;
-      } else {
-        start = prefix.length - start;
-      }
-
-      if (prefix[start] != '\u2022') {
-        prefix = prefix.substring(0, start) + '\u2022 ' + prefix.substring(start, prefix.length);
-        shift += 2;
-      }
-      final transformed = prefix +
-          '\u2022 ' +
-          (newValue.selection.base.offset >= newValue.text.length
-              ? ''
-              : newValue.text.substring(newValue.selection.extentOffset, newValue.text.length));
-      return TextEditingValue(
-        text: transformed.toString(),
-        selection: TextSelection.collapsed(offset: newValue.selection.extentOffset + shift),
-      );
-    } else if (newTextLength - oldTextLength == 1 &&
-        newTextLength > 2 &&
-        newValue.selection.baseOffset == newValue.selection.extentOffset &&
-        isAlphanumeric(newValue.text[newValue.selection.extentOffset - 1]) &&
-        !isUppercase(newValue.text[newValue.selection.extentOffset - 1]) &&
-        newValue.text[newValue.selection.extentOffset - 2] == ' ' &&
-        newValue.text[newValue.selection.extentOffset - 3] == '\u2022') {
-      final text = newValue.text.substring(0, newValue.selection.extentOffset - 1) +
-          newValue.text[newValue.selection.extentOffset - 1].toUpperCase() +
-          (newValue.selection.base.offset >= newValue.text.length
-              ? ''
-              : newValue.text.substring(newValue.selection.extentOffset, newValue.text.length));
-      return TextEditingValue(text: text, selection: newValue.selection);
-    } else
-      return newValue;
   }
 }

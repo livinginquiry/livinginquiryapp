@@ -244,7 +244,7 @@ class WorksheetContent {
 
 enum QuestionType { freeform, multiple, meta }
 
-enum QuestionSubType { tags, children, color_picker }
+enum QuestionSubType { tags, children, color_picker, turnaround }
 
 class Question {
   final QuestionType type;

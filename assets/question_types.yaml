@@ -1,5 +1,5 @@
 worksheet:
-  version: 0.0.4
+  version: 0.0.5
   body:
     open_mic:
       display_name: Open Note
@@ -43,6 +43,7 @@ worksheet:
           prompt: ~
         - question: Turn the thought around.
           type: freeform
+          sub_type: turnaround
           prompt: Is the opposite as true or truer?
         - question: Notes
           type: freeform
