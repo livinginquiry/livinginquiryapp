@@ -354,13 +354,17 @@ class WorksheetFilter {
     return query != null;
   }
 
-  Set<String> getSearchTerms(Set<String> stopWords) {
+  Set<String> getSearchTerms(Set<String> stopWords, {bool filter = true}) {
     return query == null
         ? <String>{}
-        : query!.split(splitPattern).map((s) => s.trim()).where((w) => !stopWords.contains(w) && w.isNotEmpty).toSet();
+        : query!
+            .split(splitPattern)
+            .map((s) => s.trim())
+            .where((w) => w.isNotEmpty && (!filter || !stopWords.contains(w)))
+            .toSet();
   }
 
-  bool apply(Worksheet worksheet, Set<String>? searchTerms) {
+  bool apply(Worksheet worksheet, Set<String>? unfilteredSearchTerms, Set<String>? filteredSearchTerms) {
     if ((includeArchived == FilterMode.No && worksheet.isArchived) ||
         (includeArchived == FilterMode.OnlyYes && !worksheet.isArchived)) {
       return false;
@@ -381,16 +385,20 @@ class WorksheetFilter {
       return true;
     }
 
-    if (searchTerms?.isEmpty ?? true) {
+    if ((unfilteredSearchTerms?.isEmpty ?? true) && (filteredSearchTerms?.isEmpty ?? true)) {
       // we're searching but no terms were supplied so return false to indicate no matches
       return false;
     } else {
+      // don't exclude stop-words from tag search
       final commonTags = worksheet.tags?.isEmpty ?? true
           ? <String>{}
-          : searchTerms!.intersection(worksheet.tags!.map((s) => s.toLowerCase()).toSet());
+          : unfilteredSearchTerms!.intersection(worksheet.tags!.map((s) => s.toLowerCase()).toSet());
 
       // all the words not matched by tags in this worksheet
-      final remaining = Set.from(searchTerms!.difference(commonTags));
+      final remaining = Set.from(filteredSearchTerms!.difference(commonTags));
+      if (remaining.isEmpty) {
+        return commonTags.isNotEmpty;
+      }
       final answers = worksheet.content.questions.map((q) => q.answer.toLowerCase()).toList(growable: false);
 
       // of the remaining words, find the first NOT included in the worksheet text
@@ -402,8 +410,9 @@ class WorksheetFilter {
   }
 
   List<Worksheet> applyAll(List<Worksheet> worksheets, Set<String> stopWords) {
-    final searchTerms = getSearchTerms(stopWords);
-    return worksheets.where((ws) => apply(ws, searchTerms)).toList(growable: false);
+    final unfilteredTerms = getSearchTerms(stopWords, filter: false);
+    final filteredTerms = unfilteredTerms.where((w) => !stopWords.contains(w)).toSet();
+    return worksheets.where((ws) => apply(ws, unfilteredTerms, filteredTerms)).toList(growable: false);
   }
 
   bool operator ==(o) =>

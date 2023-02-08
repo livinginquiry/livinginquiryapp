@@ -244,6 +244,6 @@ class _StopWordsFilterFormatter extends TextInputFormatter {
     String text = newValue.text;
     final isStopWord = delimiters.firstWhereOrNull((delim) => text.endsWith(delim)) != null &&
         stopWords!.contains(text.trim().toLowerCase());
-    return isStopWord ? oldValue : newValue;
+    return isStopWord ? TextEditingValue.empty : newValue;
   }
 }

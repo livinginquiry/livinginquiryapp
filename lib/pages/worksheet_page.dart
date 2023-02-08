@@ -170,7 +170,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                             tags: new List.from(_tags),
                             onChanged: (value) => field.didChange(value),
                             suggestions: _suggestions,
-                            stopWords: snapshot.data,
+                            stopWords: <String>{},
                             textEditingController: controller,
                             focusNode: focusNode,
                             minTextFieldWidth: 100.0,
