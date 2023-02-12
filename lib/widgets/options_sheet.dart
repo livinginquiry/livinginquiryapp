@@ -31,6 +31,7 @@ class OptionsSheet extends StatefulWidget {
 class _OptionsSheetState extends State<OptionsSheet> {
   late Color _worksheetColor;
   late bool _isStarred;
+  bool _tapped = false;
 
   @override
   void initState() {
@@ -49,47 +50,58 @@ class _OptionsSheetState extends State<OptionsSheet> {
               leading: SizedBox(
                   height: 50,
                   width: 50,
-                  child: Switch(
-                    value: _isStarred,
-                    onChanged: (value) {
+                  child: new Icon(_isStarred ? Icons.star : Icons.star_border_outlined,
+                      color: _isStarred ? Colors.amber : null)),
+              title: new Text(_isStarred ? 'Remove from Starred' : 'Add to Starred'),
+              onTap: _tapped
+                  ? null
+                  : () {
                       setState(() {
-                        _isStarred = value;
+                        widget.callBackOptionTapped!(_isStarred ? moreOptions.unstar : moreOptions.star);
+                        _isStarred = !_isStarred;
+                        _tapped = true;
                       });
-                      widget.callBackOptionTapped!(value ? moreOptions.star : moreOptions.unstar);
-                    },
-                    activeTrackColor: Colors.lightGreenAccent,
-                    activeColor: Colors.green,
-                  )),
-              title: new Text("Starred")),
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        Navigator.of(context).pop();
+                      });
+                    }),
           new ListTile(
               leading:
                   SizedBox(height: 50, width: 50, child: new Icon(widget.isArchived ? Icons.unarchive : Icons.archive)),
               title: new Text(widget.isArchived ? 'Un-Archive' : 'Archive'),
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.callBackOptionTapped!(widget.isArchived ? moreOptions.unarchive : moreOptions.archive);
-              }),
+              onTap: _tapped
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.callBackOptionTapped!(widget.isArchived ? moreOptions.unarchive : moreOptions.archive);
+                    }),
           new ListTile(
               leading: SizedBox(height: 50, width: 50, child: Icon(Icons.delete)),
               title: Text('Delete permanently'),
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.callBackOptionTapped!(moreOptions.delete);
-              }),
+              onTap: _tapped
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.callBackOptionTapped!(moreOptions.delete);
+                    }),
           new ListTile(
               leading: SizedBox(height: 50, width: 50, child: Icon(Icons.content_copy)),
               title: Text('Duplicate'),
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.callBackOptionTapped!(moreOptions.copy);
-              }),
+              onTap: _tapped
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.callBackOptionTapped!(moreOptions.copy);
+                    }),
           new ListTile(
               leading: SizedBox(height: 50, width: 50, child: Icon(Icons.share)),
               title: new Text('Share'),
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.callBackOptionTapped!(moreOptions.share);
-              }),
+              onTap: _tapped
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.callBackOptionTapped!(moreOptions.share);
+                    }),
           new Padding(
             padding: EdgeInsets.only(left: 10, right: 10),
             child: SizedBox(
@@ -119,6 +131,9 @@ class _OptionsSheetState extends State<OptionsSheet> {
   }
 
   Future<void> _changeColor(Color color) async {
+    if (_tapped) {
+      return;
+    }
     widget.callBackColorTapped(color);
     setState(() {});
   }

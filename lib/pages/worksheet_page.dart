@@ -368,7 +368,6 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       case moreOptions.star:
         {
           if (!this._worksheet.isStarred) {
-            print("I'm starring!!!");
             setState(() {
               this._worksheet.isStarred = true;
               _fbKey.currentState!.save();
@@ -379,7 +378,6 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       case moreOptions.unstar:
         {
           if (this._worksheet.isStarred) {
-            print("I'm un-starring!!!");
             setState(() {
               this._worksheet.isStarred = false;
               _fbKey.currentState!.save();
