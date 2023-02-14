@@ -77,7 +77,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
               transform: new Matrix4.translationValues(0.0, 0.0, 0.0),
               child: SearchAppBar(
                   Container(
-                      color: Theme.of(context).backgroundColor,
+                      color: Theme.of(context).colorScheme.background,
                       child: Transform(
                           transform: new Matrix4.translationValues(0.0, 2.0, 0.0),
                           child: TabBar(

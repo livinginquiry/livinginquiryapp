@@ -77,11 +77,14 @@ class _WorksheetGroupPageState extends ConsumerState<WorksheetGroupPage>
                 preferredSize: Size(double.infinity, 60),
                 child: AppBar(
                   elevation: 1,
+                  leading: BackButton(
+                    color: Colors.black,
+                  ),
                   backgroundColor: Colors.white,
                   title: _pageTitle(),
                   bottom: PreferredSize(
                       child: Container(
-                        color: Theme.of(context).accentColor,
+                        color: Theme.of(context).colorScheme.secondary,
                         height: 12.0,
                       ),
                       preferredSize: Size.fromHeight(12.0)),
@@ -101,7 +104,7 @@ class _WorksheetGroupPageState extends ConsumerState<WorksheetGroupPage>
     final heading = _parentWorksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
         ? truncateWithEllipsis(extractAnswerFirstLine(_parentWorksheet.content.questions.first.answer), 35)
         : _parentWorksheet.content.displayName ?? _parentWorksheet.content.type.name.titleCase;
-    return Text(heading);
+    return Text(heading, style: navBarStyle);
   }
 
   Function(Worksheet, bool) _worksheetTileTapped(BuildContext ctx) {

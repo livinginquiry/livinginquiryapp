@@ -274,8 +274,6 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   Widget _pageTitle() {
-    final TextStyle navBarStyle =
-        Theme.of(context).textTheme.titleMedium!.copyWith(color: Theme.of(context).colorScheme.secondary.darken(.2));
     if (_isNew) {
       return Text(_worksheet.content.type.name.titleCase, style: navBarStyle);
     } else {

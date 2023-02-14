@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../constants/constants.dart' as constants;
+import '../constants/theme.dart';
 
 final fontColor = Color(0xff595959);
 final borderColor = Color(0xffd3d3d3);
@@ -196,3 +197,6 @@ extension ColorBrightness on Color {
     return hslLight.toColor();
   }
 }
+
+final navBarColor = lightTheme.colorScheme.secondary.darken(.2);
+final navBarStyle = lightTheme.textTheme.titleMedium!.copyWith(color: navBarColor);

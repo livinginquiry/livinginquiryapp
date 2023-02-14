@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livinginquiryapp/pages/worksheets_page.dart';
 
+import '../models/util.dart';
 import '../models/worksheet.dart';
 
 class WorksheetFilterViewPage extends StatelessWidget {
@@ -18,11 +19,14 @@ class WorksheetFilterViewPage extends StatelessWidget {
           preferredSize: Size(double.infinity, 60),
           child: AppBar(
             elevation: 1,
+            leading: BackButton(
+              color: Colors.black,
+            ),
             backgroundColor: Colors.white,
-            title: Text(title),
+            title: Text(title, style: navBarStyle),
             bottom: PreferredSize(
                 child: Container(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   height: 12.0,
                 ),
                 preferredSize: Size.fromHeight(12.0)),
