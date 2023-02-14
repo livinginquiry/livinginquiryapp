@@ -263,7 +263,8 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     if (msg.isNotEmpty) {
       _showErrorDialog(ctx, msg);
     } else {
-      var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(),
+      var emptyWorksheet = Worksheet(
+          "", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(content.defaultColorIndex),
           parentId: _worksheet.id);
       Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
     }
@@ -275,7 +276,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   Widget _pageTitle() {
     if (_isNew) {
-      return Text(_worksheet.content.type.name.titleCase, style: navBarStyle);
+      return Text(_worksheet.content.displayName ?? _worksheet.content.type.name.titleCase, style: navBarStyle);
     } else {
       final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
           ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)

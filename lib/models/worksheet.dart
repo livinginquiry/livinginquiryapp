@@ -131,12 +131,14 @@ class WorksheetContent {
   final String? displayName;
   final List<WorksheetType>? children;
   final Version version;
+  final int defaultColorIndex;
   WorksheetContent(
       {required List<Question> questions,
       required this.type,
       required this.displayName,
       required Version version,
-      this.children})
+      this.children,
+      this.defaultColorIndex = 0})
       : this.version = version,
         this.questions = _FALLBACK_VERSION.compareTo(version) == 0 ? _insertMetaFields(questions, type) : questions;
 
@@ -151,7 +153,8 @@ class WorksheetContent {
             version: version,
             children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
                 .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
-                .toList());
+                .toList(),
+            defaultColorIndex: (data['default_color_index'] ?? 0) as int);
 
   WorksheetContent.fromMap(Map<dynamic, dynamic> data)
       : this(
@@ -164,7 +167,8 @@ class WorksheetContent {
             version: Version.parse(data['version'] ?? FALLBACK_WORKSHEET_VERSION),
             children: ((data['children'] ?? List<String>.empty()) as List<dynamic>)
                 .map((t) => util.enumFromString(WorksheetType.values, t, snakeCase: true)!)
-                .toList());
+                .toList(),
+            defaultColorIndex: (data['default_color_index'] ?? 0) as int);
 
   // TODO: devise better versioning strategy!
   static List<Question> _insertMetaFields(List<Question> questions, WorksheetType type) {
@@ -210,6 +214,7 @@ class WorksheetContent {
     map['display_name'] = displayName;
     map['version'] = version.toString();
     map['children'] = children?.map((t) => util.enumToString(t, snakeCase: true)).toList() ?? List.empty();
+    map['default_color_index'] = defaultColorIndex;
     return map;
   }
 
@@ -231,14 +236,15 @@ class WorksheetContent {
       listEquals(o.questions, questions) &&
       o.type == type &&
       o.displayName == displayName &&
-      listEquals(o.children, children);
+      listEquals(o.children, children) &&
+      o.defaultColorIndex == defaultColorIndex;
 
   @override
-  int get hashCode => Object.hash(questions, type, displayName, children);
+  int get hashCode => Object.hash(questions, type, displayName, children, defaultColorIndex);
 
   @override
   toString() {
-    return "WorksheetContent(displayName: $displayName, type: $type, children: $children, questions: $questions)";
+    return "WorksheetContent(displayName: $displayName, type: $type, children: $children, colorIndex: $defaultColorIndex, questions: $questions)";
   }
 }
 

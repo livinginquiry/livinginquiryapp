@@ -204,7 +204,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
 
   void _newWorksheetTapped(BuildContext ctx, WorksheetContent content) {
     // "-1" id indicates the worksheet is not new
-    var emptyWorksheet = Worksheet("", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor());
+    var emptyWorksheet = Worksheet(
+        "", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(content.defaultColorIndex));
     Navigator.push(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
   }
 

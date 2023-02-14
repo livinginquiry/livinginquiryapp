@@ -1,8 +1,8 @@
 worksheet:
-  version: 0.0.5
+  version: 0.0.6
   body:
     open_mic:
-      display_name: Open Note
+      display_name: Journal Note
       questions:
         - question: What is it about?
           type: freeform
@@ -18,6 +18,7 @@ worksheet:
           type: meta
           sub_type: color_picker
           prompt: Pick background color.
+      default_color_index: 0
     one_belief:
       display_name: One Belief at a Time
       questions:
@@ -56,6 +57,7 @@ worksheet:
           type: meta
           sub_type: color_picker
           prompt: Pick background color.
+      default_color_index: 5
     judge_your_neighbor:
       display_name: Judge Your Neighbor
       questions:
@@ -95,4 +97,5 @@ worksheet:
           type: meta
           sub_type: color_picker
           prompt: Pick background color.
+      default_color_index: 4
       children: [ one_belief ]
