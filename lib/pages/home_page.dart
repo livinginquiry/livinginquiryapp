@@ -262,7 +262,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       applicationIcon: ImageIcon(AssetImage("assets/icon.png"), size: 75),
       applicationName: 'Pocket Inquiry',
       applicationVersion: '0.0.1',
-      applicationLegalese: '©2022 http://pocketinquiry.com/',
+      applicationLegalese: '©2023 http://pocketinquiry.com/',
       children: <Widget>[
         Padding(
             padding: EdgeInsets.only(top: 15),
