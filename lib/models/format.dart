@@ -127,9 +127,7 @@ abstract class BulletFormatter extends TextInputFormatter {
   bool isDelete(TextEditingValue oldValue, TextEditingValue newValue) {
     if (!newValue.selection.isCollapsed) {
       return false;
-    } else if (oldValue.selection.isCollapsed &&
-        newValue.selection.isCollapsed &&
-        oldValue.text.length - newValue.text.length > 0) {
+    } else if (oldValue.selection.isCollapsed && oldValue.text.length - newValue.text.length > 0) {
       return true;
     } else if (!oldValue.selection.isCollapsed &&
         oldValue.text.length - (oldValue.selection.baseOffset - oldValue.selection.extentOffset).abs() ==
@@ -139,10 +137,32 @@ abstract class BulletFormatter extends TextInputFormatter {
     return false;
   }
 
+  bool wasPasteOrAutofill(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.length - oldValue.text.length > 1) {
+      return true;
+    } else if (newValue.text.length > oldValue.text.length) {
+      final oldLen = oldValue.text.length;
+      final endIndex = min(newValue.text.length, getRightmostIndex(newValue.selection));
+      for (var i = 0; i < endIndex; i++) {
+        if (i == oldLen) {
+          return oldValue.selection.contains(i);
+        } else if (newValue.text[i] != oldValue.text[i] && !oldValue.selection.contains(i)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /// capitalize the first letter of the current line (if exists)
   TextEditingValue capitalizeFirstLetter(TextEditingValue newValue, {TextEditingValue? oldValue, int? cursor}) {
+    // If the new selection isn't collapsed, we're still editing and can ignore. We can also ignore if the operation is
+    // a delete or if neither of the following is true:
+    // 1. The cursor is at the beginning of the line
+    // 2. The new text was pasted or auto-filled
     if (!newValue.selection.isCollapsed ||
-        (oldValue != null && (!isCursorAtStart(oldValue) || isDelete(oldValue, newValue)))) {
+        (oldValue != null &&
+            (!(isCursorAtStart(oldValue) || wasPasteOrAutofill(oldValue, newValue)) || isDelete(oldValue, newValue)))) {
       return newValue;
     }
     final startPos = cursor ?? getLeftmostIndex(newValue.selection);
@@ -269,5 +289,12 @@ class TurnaroundBulletFormatter extends BulletFormatter {
         break;
     }
     return updatedValue;
+  }
+}
+
+extension TextSelectionContainment on TextSelection {
+  bool contains(int offset) {
+    return (this.baseOffset <= offset && this.extentOffset >= offset) ||
+        (this.baseOffset >= offset && this.extentOffset <= offset);
   }
 }
