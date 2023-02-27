@@ -97,5 +97,5 @@ worksheet:
           type: meta
           sub_type: color_picker
           prompt: Pick background color.
-      default_color_index: 4
+      default_color_index: 6
       children: [ one_belief ]
