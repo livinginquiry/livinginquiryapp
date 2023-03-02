@@ -5,7 +5,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:recase/recase.dart';
@@ -25,8 +24,9 @@ const int MAXIMUM_CHARS = 500;
 
 class WorksheetPage extends ConsumerStatefulWidget {
   final Worksheet worksheet;
+  final bool forceSave;
 
-  const WorksheetPage(this.worksheet, {Key? key}) : super(key: key);
+  const WorksheetPage(this.worksheet, {this.forceSave = false, Key? key}) : super(key: key);
   @override
   _WorksheetPageState createState() => _WorksheetPageState();
 }
@@ -245,7 +245,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
 
   Widget _createNewWorksheetButton(BuildContext context, WorksheetContent content) {
     return TextButton(
-      onPressed: () => _createChildWorksheet(context, content),
+      onPressed: () => _createChildWorksheet(context, content, null),
       child: Text(content.displayName ?? content.type.name.titleCase),
       style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -257,16 +257,34 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
     );
   }
 
-  Future<void> _createChildWorksheet(BuildContext ctx, WorksheetContent content) async {
+  WorksheetContent _prePopulateContent(WorksheetContent content, String? selectedText) {
+    switch (content.type) {
+      case WorksheetType.oneBelief:
+        if (_worksheet.content.type != WorksheetType.judgeYourNeighbor) {
+          return content;
+        }
+        final situation = _worksheet.content.questions[0].answer;
+        content.questions[1].answer = situation;
+        if (selectedText?.isNotEmpty ?? false) {
+          content.questions[0].answer = selectedText!;
+        }
+        return content;
+      default:
+        return content;
+    }
+  }
+
+  Future<void> _createChildWorksheet(BuildContext ctx, WorksheetContent content, String? selectedText) async {
     _fbKey.currentState!.save();
     String msg = await _persistData(ctx);
     if (msg.isNotEmpty) {
       _showErrorDialog(ctx, msg);
     } else {
-      var emptyWorksheet = Worksheet(
-          "", content.clone(), DateTime.now(), DateTime.now(), getInitialWorksheetColor(content.defaultColorIndex),
+      final prePopulated = _prePopulateContent(content.clone(), selectedText);
+      var childWorksheet = Worksheet(
+          "", prePopulated, DateTime.now(), DateTime.now(), getInitialWorksheetColor(content.defaultColorIndex),
           parentId: _worksheet.id);
-      Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(emptyWorksheet)));
+      Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => WorksheetPage(childWorksheet, forceSave: true)));
     }
   }
 
@@ -275,14 +293,10 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   Widget _pageTitle() {
-    if (_isNew) {
-      return Text(_worksheet.content.displayName ?? _worksheet.content.type.name.titleCase, style: navBarStyle);
-    } else {
-      final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
-          ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)
-          : _worksheet.content.displayName ?? _worksheet.content.type.name.titleCase;
-      return Text(heading, style: navBarStyle);
-    }
+    final heading = _worksheet.content.questions.firstOrNull?.answer.isNotEmpty ?? false
+        ? truncateWithEllipsis(extractAnswerFirstLine(_worksheet.content.questions.first.answer), 35)
+        : _worksheet.content.displayName ?? _worksheet.content.type.name.titleCase;
+    return Text(heading, style: navBarStyle);
   }
 
   List<Widget> _buildActions(BuildContext context) {
@@ -318,7 +332,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
   }
 
   Future<String> _persistData(BuildContext context) async {
-    if (_original != _worksheet) {
+    if (_original != _worksheet || widget.forceSave) {
       final db = ref.read(worksheetNotifierProvider.notifier);
       return db.addWorksheet(_worksheet).then((id) {
         _worksheet.id = id;
@@ -567,7 +581,13 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
               textInputAction: TextInputAction.newline,
               name: q.question,
               decoration: InputDecoration(labelText: q.prompt),
-              validator: FormBuilderValidators.max(MAXIMUM_CHARS),
+              validator: (text) {
+                if (text != null && text.length >= MAXIMUM_CHARS) {
+                  return "Text exceeds maximum length of $MAXIMUM_CHARS";
+                } else {
+                  return null;
+                }
+              },
               onSaved: (val) {
                 q.answer = val ?? "";
               },
@@ -576,6 +596,38 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                 if (_fieldControllers.length - 1 > idx) {
                   FocusScope.of(context).requestFocus(_fieldControllers[idx + 1].item2);
                 }
+              },
+              contextMenuBuilder: (context, editableTextState) {
+                final buttonItems = editableTextState.contextMenuButtonItems;
+                final anchors = editableTextState.contextMenuAnchors;
+                final textEditingValue = editableTextState.currentTextEditingValue;
+                final selectedText =
+                    textEditingValue.text.substring(textEditingValue.selection.start, textEditingValue.selection.end);
+                final provider = ref.read(worksheetTypeProvider);
+                final childrenTypes = _worksheet.content.children!;
+                final contentTypes = provider
+                    .getCachedInquiryTypes()!
+                    .entries
+                    .map((e) => e.value)
+                    .where((element) => childrenTypes.contains(element.type));
+
+                final actions = textEditingValue.selection.isCollapsed || !textEditingValue.selection.isValid
+                    ? <ContextMenuButtonItem>[]
+                    : contentTypes
+                        .map((e) => ContextMenuButtonItem(
+                            onPressed: () async {
+                              print("got selected txt $selectedText");
+                              return _createChildWorksheet(context, e, selectedText);
+                            },
+                            type: ContextMenuButtonType.custom,
+                            label: "Create new..."))
+                        .toList();
+                final items = [...buttonItems, ...actions];
+                print("my items are $items");
+                // return AdaptiveTextSelectionToolbar(
+                //     children: AdaptiveTextSelectionToolbar.getAdaptiveButtons(context, items).toList(),
+                //     anchors: anchors);
+                return AdaptiveTextSelectionToolbar.buttonItems(buttonItems: items, anchors: anchors);
               },
             );
           }

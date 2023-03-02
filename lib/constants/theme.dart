@@ -44,12 +44,8 @@ ThemeData lightTheme = ThemeData(
     toggleButtonsTheme: ToggleButtonsThemeData(
         //toggle button theme
         ),
-    buttonColor: Color(0xFF1E21CA),
     secondaryHeaderColor: Colors.grey,
     textSelectionTheme: TextSelectionThemeData(selectionColor: Color(0xffE09E45)),
-    // textSelectionColor: Color(0xffB5BFD3),
-    // cursorColor: Color(0xff936F3E),
-    // textSelectionHandleColor: Color(0xff936F3E),
     backgroundColor: Colors.white,
     dialogBackgroundColor: Colors.white,
     indicatorColor: Color(0xff457BE0),
@@ -61,9 +57,6 @@ ThemeData lightTheme = ThemeData(
         ),
     primaryTextTheme: TextTheme(
         //text theme that contrast with primary color
-        ),
-    accentTextTheme: TextTheme(
-        //text theme that contrast with accent Color
         ),
     inputDecorationTheme: InputDecorationTheme(
         // default values for InputDecorator, TextField, and TextFormField
