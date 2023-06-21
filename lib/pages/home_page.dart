@@ -137,8 +137,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
             return SpeedDial(
               animatedIcon: AnimatedIcons.menu_close,
               animatedIconTheme: IconThemeData(size: 22.0),
-              foregroundColor: Theme.of(context).backgroundColor,
-              backgroundColor: Theme.of(context).accentColor,
+              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).secondaryHeaderColor,
               visible: true,
               curve: Curves.bounceIn,
               children: snapshot.data!,

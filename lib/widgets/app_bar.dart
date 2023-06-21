@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide SearchBar;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:livinginquiryapp/widgets/search_bar.dart';
 import 'package:livinginquiryapp/widgets/search_transition_painter.dart';
@@ -106,7 +106,7 @@ class _SearchAppBarState extends ConsumerState<SearchAppBar> with SingleTickerPr
           actions: widget.actions,
           bottom: PreferredSize(
               child: Container(
-                color: Theme.of(context).accentColor,
+                color: Theme.of(context).colorScheme.secondary,
                 height: 12.0,
               ),
               preferredSize: Size.fromHeight(12.0)),

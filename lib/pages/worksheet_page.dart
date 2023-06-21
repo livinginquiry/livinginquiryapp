@@ -20,7 +20,7 @@ import '../widgets/chip_tags.dart';
 import '../widgets/color_slider.dart';
 import '../widgets/options_sheet.dart';
 
-const int MAXIMUM_CHARS = 500;
+const int MAXIMUM_CHARS = 3000;
 
 class WorksheetPage extends ConsumerStatefulWidget {
   final Worksheet worksheet;
@@ -106,14 +106,13 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
       child: Scaffold(
         key: _globalKey,
         appBar: AppBar(
-          brightness: Brightness.light,
           leading: BackButton(
             color: Colors.black,
           ),
           actions: _buildActions(context),
           elevation: 1,
           backgroundColor: Colors.white,
-          title: _pageTitle(),
+          title: _pageTitle(), systemOverlayStyle: SystemUiOverlayStyle.dark,
         ),
         body: KeyboardActions(
           config: _keyboardActionsConfig,
@@ -569,6 +568,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
             formItem = FormBuilderTextField(
               style: largerStyle,
               maxLines: null,
+              maxLength: MAXIMUM_CHARS,
               readOnly: false,
               textCapitalization: TextCapitalization.sentences,
               inputFormatters: <TextInputFormatter>[
@@ -620,7 +620,7 @@ class _WorksheetPageState extends ConsumerState<WorksheetPage> with WidgetsBindi
                               return _createChildWorksheet(context, e, selectedText);
                             },
                             type: ContextMenuButtonType.custom,
-                            label: "Create new..."))
+                            label: "New Worksheet"))
                         .toList();
                 final items = [...buttonItems, ...actions];
                 print("my items are $items");
